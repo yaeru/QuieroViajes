@@ -45,6 +45,11 @@
 
 /*Resumen*/
 #qvResumen {
+	.qv-resumen-extras {
+		margin-top: -5px;
+		padding-left: 20px;
+		list-style: disc;
+	}
 	.qv-resumen-total {
 		font-weight: bold;
 		font-size: 1.5em;

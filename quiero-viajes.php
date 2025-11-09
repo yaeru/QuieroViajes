@@ -19,6 +19,7 @@ define( 'QV_API', "PEPE" );
 require_once QV_PATH . 'includes/class-qv-cpt.php';
 require_once QV_PATH . 'admin/class-qv-admin.php';
 require_once QV_PATH . 'admin/class-qv-frontend.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-qv-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-conductores.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-usuarios.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-templates.php';
@@ -69,6 +70,10 @@ function qv_init_plugin() {
 		$qv_usuarios = new QV_Usuarios();
 		$qv_usuarios->init();
 	}
+	if ( is_admin() ) {
+		new QV_Settings_Page();
+	}
+
 
     // En frontend y backend (para interceptar plantillas)
 	$qv_templates = new QV_Templates();

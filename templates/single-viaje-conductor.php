@@ -67,7 +67,10 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
 					</p>
 				</div> -->
-				
+				<p class="qv-chip-icon qv-chip-distancia">
+						Origen lat<br>
+						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
+					</p>
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
 						<span class="qv-resaltado"><?php echo esc_html($origen); ?></span>
