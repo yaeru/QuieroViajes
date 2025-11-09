@@ -10,6 +10,12 @@ $hora = get_post_meta($post->ID, '_qv_hora', true);
 $origen = get_post_meta($post->ID, '_qv_origen', true);
 $destino = get_post_meta($post->ID, '_qv_destino', true);
 
+/* Para el mapa */
+$origen_lat = get_post_meta($post->ID, '_qv_origen_lat', true);
+$origen_lng = get_post_meta($post->ID, '_qv_origen_lng', true);
+$destino_lat = get_post_meta($post->ID, '_qv_destino_lat', true);
+$destino_lng = get_post_meta($post->ID, '_qv_destino_lng', true);
+
 $distancia = get_post_meta($post->ID, '_qv_distancia', true);
 
 $estado = get_post_meta($post->ID, '_qv_estado', true);
@@ -18,15 +24,17 @@ $observaciones = get_post_meta($post->ID, '_qv_observaciones', true);
 
 $conductor_id = get_post_meta($post->ID, '_qv_conductor', true);
 $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
+
 ?>
 
-<?php
-$metas = get_post_meta( $post->ID );
-foreach ( $metas as $key => $value ) {
-    echo esc_html($key) . ': ' . esc_html(is_array($value) ? implode(', ', $value) : $value) . "\n";
-}
-?>
-
+<pre>
+	<?php
+	$metas = get_post_meta( $post->ID );
+	foreach ( $metas as $key => $value ) {
+		echo esc_html($key) . ': ' . esc_html(is_array($value) ? implode(', ', $value) : $value) . "\n";
+	}
+	?>
+</pre>
 <header class="qv-header">
 	<h2>
 		🏷 #123456 - 📅<?php echo esc_html($fecha); ?> - 🕐 <?php echo esc_html($hora); ?> hs
@@ -36,13 +44,13 @@ foreach ( $metas as $key => $value ) {
 
 <div class="viaje-details qv-grid qv-grid-2-3">
 	<aside class="col">
-		<div  class="qv-card">
-			<article>
+		<div class="qv-card">
+			<article id="qv-chip-info">
 				<div class="qv-chip">
-					<p class="qv-chip-icon qv-chip-distancia">
+					<!-- <p class="qv-chip-icon qv-chip-distancia">
 						Distancia<br>
 						<span class="qv-resaltado"><?php echo $distancia ? esc_html($distancia . ' km') : 'No disponible'; ?></span>
-					</p>
+					</p> -->
 					<!-- <p class="qv-chip-icon qv-chip-importe">
 						Importe total<br>
 						<span class="qv-resaltado"><?php echo $importe_total ? '$ ' . esc_html(number_format($importe_total, 2)) : '$ -'; ?></span>
@@ -50,6 +58,13 @@ foreach ( $metas as $key => $value ) {
 					<!-- <p class="qv-chip-icon qv-chip-importe">Importe x km<br>
 						<span class="qv-resaltado">$ <?php echo esc_html($importe_km); ?></span>
 					</p> -->
+				</div>
+
+				<div class="qv-chip">
+					<p class="qv-chip-icon qv-chip-distancia">
+						Origen lat<br>
+						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
+					</p>
 				</div>
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
@@ -62,7 +77,7 @@ foreach ( $metas as $key => $value ) {
 				</div>
 			</article>
 			<hr>
-			<article id="qv-conductor" class="qv-chip-viaje qv-chip-viaje-perfil">
+			<article id="qvChipConductor" class="qv-chip-viaje qv-chip-viaje-perfil">
 				<?php if ($conductor): ?>
 					<div class="qv-grid">
 						<figure class="qv-avatar">
@@ -78,14 +93,13 @@ foreach ( $metas as $key => $value ) {
 						</div>
 					</div>
 					<a href="#" class="qv-perfil-action">
-						Llamar <?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>
+						Llamar Conductor <?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>
 					</a>
 				<?php else: ?>
 					<p><em>No hay conductor asignado aún.</em></p>
 				<?php endif; ?>
 			</article>
-
-			<article id="qv-pasajero" class="qv-chip-viaje qv-chip-viaje-perfil">
+			<article id="qvChipPasajero" class="qv-chip-viaje qv-chip-viaje-perfil">
 				<?php
 				$pasajeros = get_users([
 					'role'       => 'pasajero',
@@ -124,7 +138,7 @@ foreach ( $metas as $key => $value ) {
 
 					<?php if ($telefono): ?>
 						<a href="tel:<?php echo esc_attr($telefono); ?>" class="qv-perfil-action">
-							Llamar <?php echo esc_html($pasajero->display_name); ?>
+							Llamar Pasajero <?php echo esc_html($pasajero->display_name); ?>
 						</a>
 					<?php endif; ?>
 
@@ -133,18 +147,25 @@ foreach ( $metas as $key => $value ) {
 				<?php endif; ?>
 			</article>
 
-
-			<article class="qv-chip-viaje">
-				<?php if ( $observaciones ) : ?>
-					<p><strong>Observaciones</strong> </p>
-					<p><?php echo esc_html($observaciones); ?></p>
-				<?php endif; ?>
-			</article>
+			<?php if ( $observaciones ) : ?>
+				<article id="qvChipObservaciones" class="qv-chip-viaje">
+					<p class="">Observaciones <br>
+						<span class="qv-resaltado"><?php echo esc_html($observaciones); ?></span>
+					</p>
+				</article>
+			<?php endif; ?>
 		</div>
-
 	</aside>
-	<div class="col">
+	<main id="qvMainMap" class="col">
+		<div class="qv-card">
+			<div id="qvChipMap" style="width: 100%; min-height: 400px;"
+			data-origen-lat="<?php echo esc_attr($origen_lat); ?>"
+			data-origen-lng="<?php echo esc_attr($origen_lng); ?>"
+			data-destino-lat="<?php echo esc_attr($destino_lat); ?>"
+			data-destino-lng="<?php echo esc_attr($destino_lng); ?>">
+		</div>
 	</div>
+</main>
 </div>
 
 <?php get_footer(); ?>

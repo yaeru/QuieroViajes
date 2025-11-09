@@ -19,10 +19,13 @@ class QV_Admin {
 		global $post;
 		if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
 			if ( $post->post_type === 'viaje' ) {
-            // TU API KEY VA AQUÍ
+
+				$api_key = defined('QV_GOOGLE_MAPS_API_KEY') ? QV_GOOGLE_MAPS_API_KEY : '';
+
 				wp_enqueue_script(
 					'google-maps',
-					'https://maps.googleapis.com/maps/api/js?key=YOURAPIKEY&libraries=places',
+					//'https://maps.googleapis.com/maps/api/js?key=APIHERE&libraries=places',
+					'https://maps.googleapis.com/maps/api/js?key=' . esc_attr($api_key) . '&libraries=places',
 					[],
 					null,
 					true
@@ -386,7 +389,7 @@ class QV_Admin {
 	}
 
 	public function render_resumen_metabox( $post ) {
-    // Obtener valores guardados
+		/* Obtener valores guardados */
 		$origen       = get_post_meta( $post->ID, '_qv_origen', true );
 		$origen_lat   = get_post_meta( $post->ID, '_qv_origen_lat', true );
 		$origen_lng   = get_post_meta( $post->ID, '_qv_origen_lng', true );
@@ -416,22 +419,21 @@ class QV_Admin {
 	}
 
 
-/* Guardar distancia e importe calculados desde el metabox Resumen */
-public function save_resumen_metabox( $post_id ) {
-    // No hacer nada si es autosave, ni permisos, ni nonce
-    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-    if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+	/* Guardar distancia e importe calculados desde el metabox Resumen */
+	public function save_resumen_metabox( $post_id ) {
+		/* No hacer nada si es autosave, ni permisos, ni nonce */
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+		if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-    // Obtenemos valores enviados por JS en inputs hidden
-    if ( isset($_POST['qv_distancia']) ) {
-        $distancia = floatval($_POST['qv_distancia']);
-        update_post_meta( $post_id, '_qv_distancia', $distancia );
-    }
+		/* Obtenemos valores enviados por JS en inputs hidden */
+		if ( isset($_POST['qv_distancia']) ) {
+			$distancia = floatval($_POST['qv_distancia']);
+			update_post_meta( $post_id, '_qv_distancia', $distancia );
+		}
 
-    if ( isset($_POST['qv_importe']) ) {
-        $importe = floatval($_POST['qv_importe']);
-        update_post_meta( $post_id, '_qv_importe', $importe );
-    }
-}
-
+		if ( isset($_POST['qv_importe']) ) {
+			$importe = floatval($_POST['qv_importe']);
+			update_post_meta( $post_id, '_qv_importe', $importe );
+		}
+	}
 }

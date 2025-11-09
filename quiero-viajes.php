@@ -13,10 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'QV_PATH', plugin_dir_path( __FILE__ ) );
 define( 'QV_URL', plugin_dir_url( __FILE__ ) );
+define( 'QV_API', "PEPE" );
 
 // Cargar archivos principales
 require_once QV_PATH . 'includes/class-qv-cpt.php';
 require_once QV_PATH . 'admin/class-qv-admin.php';
+require_once QV_PATH . 'admin/class-qv-frontend.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-conductores.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-usuarios.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-templates.php';

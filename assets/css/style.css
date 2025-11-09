@@ -98,10 +98,6 @@ p {
 		color: var(--qv-light);
 	}
 }
-#qv-conductor {}
-#qv-pasajero {}
-
-
 
 .qv-resaltado {
 	/*font-size: 1.3em;*/
@@ -120,4 +116,22 @@ p {
 }
 .site-content {
 	padding-bottom: 60px;
+}
+
+#qvChipConductor {}
+#qvChipPasajero {}
+#qvChipObservaciones {}
+#qvMainMap {
+	width: 100%;
+	height: 100%;
+	.qv-card {
+		padding: 0;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		#qvChipMap {
+			width: 100%;
+			height: 100%;
+		}
+	}
 }
