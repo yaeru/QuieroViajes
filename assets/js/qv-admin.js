@@ -41,41 +41,47 @@ function initAutocomplete() {
 }
 
 function calcularResumen() {
-    var origenLat = parseFloat(document.getElementById("qv_origen_lat")?.value);
-    var origenLng = parseFloat(document.getElementById("qv_origen_lng")?.value);
-    var destinoLat = parseFloat(document.getElementById("qv_destino_lat")?.value);
-    var destinoLng = parseFloat(document.getElementById("qv_destino_lng")?.value);
-    var importeKm = parseFloat(document.getElementById("qv_importe_km")?.value);
-    if (!origenLat || !origenLng || !destinoLat || !destinoLng || isNaN(importeKm)) {
-        document.getElementById("qv-distancia").textContent = "-";
-        document.getElementById("qv-importe").textContent = "-";
-        return;
-    }
+    var origen = document.getElementById("qv_origen")?.value;
+    var destino = document.getElementById("qv_destino")?.value;
+    var importeKm = document.getElementById("qv_importe_km")?.value;
+
+    if (!origen || !destino || !importeKm) return;
+
     var service = new google.maps.DistanceMatrixService();
-    service.getDistanceMatrix({
-        origins: [new google.maps.LatLng(origenLat, origenLng)],
-        destinations: [new google.maps.LatLng(destinoLat, destinoLng)],
-        travelMode: google.maps.TravelMode.DRIVING,
-        /* distancia por ruta en auto */
-        unitSystem: google.maps.UnitSystem.METRIC
-    }, function(response, status) {
-        if (status === "OK") {
-            var element = response.rows[0].elements[0];
-            if (element.status === "OK") {
-                var distanciaTexto = element.distance.text; /* ej: "12.3 km" */
-                var distanciaKm = element.distance.value / 1000; /* metros → km */
-                var importeTotal = (distanciaKm * importeKm).toFixed(2);
+    service.getDistanceMatrix(
+        {
+            origins: [origen],
+            destinations: [destino],
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC
+        },
+        function (response, status) {
+            if (status === "OK") {
+                var distanciaTexto = response.rows[0].elements[0].distance.text;
+                var distanciaKm = response.rows[0].elements[0].distance.value / 1000; // metros → km
+                var importeTotal = (distanciaKm * parseFloat(importeKm)).toFixed(2);
+
                 document.getElementById("qv-distancia").textContent = distanciaTexto;
                 document.getElementById("qv-importe").textContent = importeTotal;
             } else {
-                console.error("DistanceMatrix element error:", element.status);
-                document.getElementById("qv-distancia").textContent = "-";
-                document.getElementById("qv-importe").textContent = "-";
+                console.error("Error en DistanceMatrix:", status);
             }
-        } else {
-            console.error("DistanceMatrix error:", status);
-            document.getElementById("qv-distancia").textContent = "-";
-            document.getElementById("qv-importe").textContent = "-";
         }
-    });
+    );
 }
+
+// Ejecutar al cargar el admin y cada vez que cambien origen/destino
+document.addEventListener("DOMContentLoaded", function () {
+    if (typeof google !== "undefined" && google.maps) {
+        calcularResumen();
+
+        // recalcular al cambiar inputs
+        let origen = document.getElementById("qv_origen");
+        let destino = document.getElementById("qv_destino");
+        let importeKm = document.getElementById("qv_importe_km");
+
+        [origen, destino, importeKm].forEach(function (el) {
+            if (el) el.addEventListener("change", calcularResumen);
+        });
+    }
+});
