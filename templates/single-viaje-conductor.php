@@ -5,22 +5,22 @@ get_header();
 global $post;
 
 $empresa_id = get_post_meta($post->ID, '_qv_empresa', true);
+$estado = get_post_meta($post->ID, '_qv_estado', true);
 $fecha = get_post_meta($post->ID, '_qv_fecha', true);
 $hora = get_post_meta($post->ID, '_qv_hora', true);
 $origen = get_post_meta($post->ID, '_qv_origen', true);
 $destino = get_post_meta($post->ID, '_qv_destino', true);
+$distancia = get_post_meta($post->ID, '_qv_distancia', true);
+$importe_km = get_post_meta($post->ID, '_qv_importe_km', true);
+$importe_total = get_post_meta($post->ID, '_qv_importe', true);
+$total_general = get_post_meta($post->ID, '_qv_total_general', true);
+$observaciones = get_post_meta($post->ID, '_qv_observaciones', true);
 
 /* Para el mapa */
 $origen_lat = get_post_meta($post->ID, '_qv_origen_lat', true);
 $origen_lng = get_post_meta($post->ID, '_qv_origen_lng', true);
 $destino_lat = get_post_meta($post->ID, '_qv_destino_lat', true);
 $destino_lng = get_post_meta($post->ID, '_qv_destino_lng', true);
-
-$distancia = get_post_meta($post->ID, '_qv_distancia', true);
-
-$estado = get_post_meta($post->ID, '_qv_estado', true);
-$importe_km = get_post_meta($post->ID, '_qv_importe_km', true);
-$observaciones = get_post_meta($post->ID, '_qv_observaciones', true);
 
 $conductor_id = get_post_meta($post->ID, '_qv_conductor', true);
 $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
@@ -51,21 +51,23 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 						Distancia<br>
 						<span class="qv-resaltado"><?php echo $distancia ? esc_html($distancia . ' km') : 'No disponible'; ?></span>
 					</p>
-					<p class="qv-chip-icon qv-chip-importe">
-						Importe total<br>
-						<span class="qv-resaltado"><?php echo $importe_total ? '$ ' . esc_html(number_format($importe_total, 2)) : '$ -'; ?></span>
-					</p>
 					<p class="qv-chip-icon qv-chip-importe">Importe x km<br>
 						<span class="qv-resaltado">$ <?php echo esc_html($importe_km); ?></span>
 					</p>
-				</div> -->
-
-				<div class="qv-chip">
+					<p class="qv-chip-icon qv-chip-importe">
+						Importe<br>
+						<span class="qv-resaltado"><?php echo $importe_total ? '$ ' . esc_html(number_format($importe_total, 2)) : '$ -'; ?></span>
+					</p>
+					<p class="qv-chip-icon qv-chip-importe">
+						Importe total<br>
+						<span class="qv-resaltado"><?php echo $total_general ? '$ ' . esc_html(number_format($total_general, 2)) : '$ -'; ?></span>
+					</p>
 					<p class="qv-chip-icon qv-chip-distancia">
 						Origen lat<br>
 						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
 					</p>
-				</div>
+				</div> -->
+				
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
 						<span class="qv-resaltado"><?php echo esc_html($origen); ?></span>

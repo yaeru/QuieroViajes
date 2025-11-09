@@ -33,7 +33,8 @@ function initAutocomplete() {
                 calcularResumen();
             }
         });
-    } /* recalcular si cambia importe por km*/
+    }
+    /* recalcular si cambia importe por km */
     var importeKmInput = document.getElementById("qv_importe_km");
     if (importeKmInput) {
         importeKmInput.addEventListener("input", calcularResumen);
@@ -49,33 +50,37 @@ function calcularResumen() {
 
     var service = new google.maps.DistanceMatrixService();
     service.getDistanceMatrix(
-        {
-            origins: [origen],
-            destinations: [destino],
-            travelMode: google.maps.TravelMode.DRIVING,
-            unitSystem: google.maps.UnitSystem.METRIC
-        },
-        function (response, status) {
-            if (status === "OK") {
-                var distanciaTexto = response.rows[0].elements[0].distance.text;
-                var distanciaKm = response.rows[0].elements[0].distance.value / 1000; // metros → km
-                var importeTotal = (distanciaKm * parseFloat(importeKm)).toFixed(2);
+    {
+        origins: [origen],
+        destinations: [destino],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC
+    },
+    function (response, status) {
+        if (status === "OK") {
+            var distanciaTexto = response.rows[0].elements[0].distance.text;
+            var distanciaKm = response.rows[0].elements[0].distance.value / 1000;
+            var importeTotal = (distanciaKm * parseFloat(importeKm)).toFixed(2);
 
-                document.getElementById("qv-distancia").textContent = distanciaTexto;
-                document.getElementById("qv-importe").textContent = importeTotal;
-            } else {
-                console.error("Error en DistanceMatrix:", status);
-            }
+            document.getElementById("qv-distancia").textContent = distanciaTexto;
+            document.getElementById("qv-importe").textContent = importeTotal;
+
+                /* actualiza también los inputs hidden */
+            document.getElementById("qv_distancia_input").value = distanciaKm.toFixed(2);
+            document.getElementById("qv_importe_input").value = importeTotal;
+        } else {
+            console.error("Error en DistanceMatrix:", status);
         }
+    }
     );
 }
 
-// Ejecutar al cargar el admin y cada vez que cambien origen/destino
+/* Ejecutar al cargar el admin y cada vez que cambien origen/destino */
 document.addEventListener("DOMContentLoaded", function () {
     if (typeof google !== "undefined" && google.maps) {
         calcularResumen();
 
-        // recalcular al cambiar inputs
+        /* recalcular al cambiar inputs */
         let origen = document.getElementById("qv_origen");
         let destino = document.getElementById("qv_destino");
         let importeKm = document.getElementById("qv_importe_km");

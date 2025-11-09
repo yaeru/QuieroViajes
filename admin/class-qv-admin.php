@@ -8,6 +8,7 @@ class QV_Admin {
 		add_action( 'add_meta_boxes', [ $this, 'register_metaboxes' ] );
 		add_action( 'save_post', [ $this, 'save_detalles_metabox' ] );
 		add_action( 'save_post', [ $this, 'save_origen_destino_metabox' ] );
+		add_action( 'save_post', [ $this, 'save_gastos_extra_metabox' ] );
 		add_action( 'save_post', [ $this, 'save_resumen_metabox' ] );
 
 		// Página de ajustes
@@ -98,6 +99,15 @@ class QV_Admin {
 			'viaje',
 			'normal',
 			'high'
+		);
+
+		add_meta_box(
+			'viaje_gastos_extra',
+			'Gastos Extra',
+			[ $this, 'render_gastos_extra_metabox' ],
+			'viaje',
+			'normal',
+			'default'
 		);
 
 		add_meta_box(
@@ -391,6 +401,85 @@ class QV_Admin {
 		}
 	}
 
+	public function render_gastos_extra_metabox( $post ) {
+		wp_nonce_field( 'guardar_gastos_extra', 'gastos_extra_nonce' );
+
+		$gastos_extra = get_post_meta( $post->ID, '_gastos_extra', true );
+		if ( ! is_array( $gastos_extra ) ) {
+			$gastos_extra = [ [ 'descripcion' => '', 'importe' => '' ] ];
+		}
+		?>
+
+		<table id="qvGastosExtraTable" class="widefat">
+			<thead>
+				<tr>
+					<th>Descripción</th>
+					<th>Importe ($)</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $gastos_extra as $index => $gasto ) : ?>
+					<tr>
+						<td><input type="text" name="gastos_extra[<?php echo $index; ?>][descripcion]" value="<?php echo esc_attr( $gasto['descripcion'] ); ?>" /></td>
+						<td><input type="number" step="0.01" name="gastos_extra[<?php echo $index; ?>][importe]" value="<?php echo esc_attr( $gasto['importe'] ); ?>" /></td>
+						<td><button type="button" class="remove-row">🗑️</button></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<p><button type="button" class="button" id="add-gasto-extra">+ Añadir otro gasto</button></p>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const tableBody = document.querySelector('#qvGastosExtraTable tbody');
+				const addButton = document.querySelector('#add-gasto-extra');
+
+				addButton.addEventListener('click', () => {
+					const index = tableBody.querySelectorAll('tr').length;
+					const newRow = document.createElement('tr');
+					newRow.innerHTML = `
+				<td><input type="text" name="gastos_extra[${index}][descripcion]" value="" /></td>
+				<td><input type="number" step="0.01" name="gastos_extra[${index}][importe]" value="" /></td>
+				<td><button type="button" class="remove-row">🗑️</button></td>
+					`;
+					tableBody.appendChild(newRow);
+				});
+
+				tableBody.addEventListener('click', e => {
+					if (e.target.classList.contains('remove-row')) {
+						e.target.closest('tr').remove();
+					}
+				});
+			});
+		</script>
+		<?php
+	}
+
+	public function save_gastos_extra_metabox( $post_id ) {
+		if ( ! isset( $_POST['gastos_extra_nonce'] ) || ! wp_verify_nonce( $_POST['gastos_extra_nonce'], 'guardar_gastos_extra' ) ) {
+			return;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+		if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+		if ( isset( $_POST['gastos_extra'] ) && is_array( $_POST['gastos_extra'] ) ) {
+			$sanitized = array_map( function( $item ) {
+				return [
+					'descripcion' => sanitize_text_field( $item['descripcion'] ?? '' ),
+					'importe'     => floatval( $item['importe'] ?? 0 ),
+				];
+			}, $_POST['gastos_extra'] );
+
+			update_post_meta( $post_id, '_gastos_extra', $sanitized );
+		} else {
+			delete_post_meta( $post_id, '_gastos_extra' );
+		}
+	}
+
+
 	public function render_resumen_metabox( $post ) {
 		/* Obtener valores guardados */
 		$origen       = get_post_meta( $post->ID, '_qv_origen', true );
@@ -401,8 +490,34 @@ class QV_Admin {
 		$destino_lng  = get_post_meta( $post->ID, '_qv_destino_lng', true );
 		$importe_km   = get_post_meta( $post->ID, '_qv_importe_km', true );
 
+		// Gastos extra
+		$gastos_extra = get_post_meta( $post->ID, '_gastos_extra', true );
+		if ( ! is_array( $gastos_extra ) ) $gastos_extra = [];
+
+
+
+		$importe_estimado = get_post_meta( $post->ID, '_qv_importe', true );
+		if ( $importe_estimado === '' || $importe_estimado === null ) {
+			$importe_estimado = get_post_meta( $post->ID, '_qv_importe_total', true );
+		}
+		if ( $importe_estimado === '' || $importe_estimado === null ) {
+			$importe_estimado = get_post_meta( $post->ID, '_qv_importe_estimado', true );
+		}
+		/* asegurarnos número */
+		$importe_estimado = $importe_estimado !== '' && $importe_estimado !== null ? floatval( $importe_estimado ) : 0.0;
+
+		/* Sumar gastos extra */
+		$total_gastos = 0.0;
+		foreach ( $gastos_extra as $gasto ) {
+			if ( isset( $gasto['importe'] ) && $gasto['importe'] !== '' ) {
+				$total_gastos += floatval( $gasto['importe'] );
+			}
+		}
+
+		$total_general = round( floatval( $importe_estimado ) + $total_gastos, 2 );
+
 		?>
-		<div id="qv-resumen-box">
+		<div id="qvResumen">
 			<p><strong>Origen:</strong> <?php echo esc_html($origen); ?></p>
 			<p><strong>Destino:</strong> <?php echo esc_html($destino); ?></p>
 			<p><strong>Importe por Km:</strong> $<span id="qv-importe-km-display"><?php echo esc_html($importe_km); ?></span></p>
@@ -413,95 +528,120 @@ class QV_Admin {
 			<input type="hidden" id="qv_destino_lat" value="<?php echo esc_attr($destino_lat); ?>" />
 			<input type="hidden" id="qv_destino_lng" value="<?php echo esc_attr($destino_lng); ?>" />
 			<input type="hidden" id="qv_importe_km" value="<?php echo esc_attr($importe_km); ?>" />
+			<input type="hidden" name="qv_distancia" id="qv_distancia_input" value="">
+			<input type="hidden" name="qv_importe" id="qv_importe_input" value="">
+			<input type="hidden" name="qv_total_general" id="" value="<?php echo esc_attr($total_general); ?>">
 
 			<hr>
 			<p><strong>Distancia:</strong> <span id="qv-distancia">-</span></p>
-			<p><strong>Importe estimado:</strong> $<span id="qv-importe">-</span></p>
-		</div>
-		<?php
+			<p><strong>Importe estimado:</strong> $<span id="qv-importe"><?php echo esc_html( number_format( $importe_estimado, 2 ) ); ?></span></p>
+
+			<?php if ( ! empty( $gastos_extra ) ) : ?>
+				<hr>
+				<p><strong>Gastos extra:</strong></p>
+				<ul style="margin-left:1em;">
+					<?php foreach ( $gastos_extra as $gasto ) : 
+						if ( empty( $gasto['descripcion'] ) && ( ! isset($gasto['importe']) || $gasto['importe'] === '' ) ) continue; ?>
+						<li>
+							<?php echo esc_html( $gasto['descripcion'] ); ?> —
+							<strong>$<?php echo esc_html( number_format( floatval( $gasto['importe'] ), 2 ) ); ?></strong>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+
+			<hr>
+			<p class="qv-resumen-total"><strong>Total:</strong> $<?php echo esc_html( number_format( $total_general, 2 ) ); ?></p>
+
+	    	<!-- <?php 
+	    	echo '<pre style="max-height:500px;overflow:auto;">';
+	    	print_r( get_post_meta( $post->ID ) );
+	    	echo '</pre>'
+	    ?> -->
+	</div>
+	<?php
+}
+
+/* Guardar distancia e importe calculados desde el metabox Resumen */
+public function save_resumen_metabox( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	if ( isset( $_POST['qv_distancia'] ) ) {
+		update_post_meta( $post_id, '_qv_distancia', floatval( $_POST['qv_distancia'] ) );
 	}
 
-
-	/* Guardar distancia e importe calculados desde el metabox Resumen */
-	public function save_resumen_metabox( $post_id ) {
-		/* No hacer nada si es autosave, ni permisos, ni nonce */
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-		if ( ! current_user_can( 'edit_post', $post_id ) ) return;
-
-		/* Obtenemos valores enviados por JS en inputs hidden */
-		if ( isset($_POST['qv_distancia']) ) {
-			$distancia = floatval($_POST['qv_distancia']);
-			update_post_meta( $post_id, '_qv_distancia', $distancia );
-		}
-
-		if ( isset($_POST['qv_importe']) ) {
-			$importe = floatval($_POST['qv_importe']);
-			update_post_meta( $post_id, '_qv_importe', $importe );
-		}
+	if ( isset( $_POST['qv_importe'] ) ) {
+		update_post_meta( $post_id, '_qv_importe', floatval( $_POST['qv_importe'] ) );
 	}
-
-	/* Añadir submenú dentro del CPT "Viajes" */
-	public function add_settings_page() {
-		add_submenu_page(
-			'edit.php?post_type=viaje',
-			'Ajustes de Viajes',
-			'Ajustes',
-			'manage_options',
-			'qv-settings',
-			[ $this, 'render_settings_page' ]
-		);
+	if ( isset( $_POST['qv_total_general'] ) ) {
+		update_post_meta( $post_id, '_qv_total_general', floatval( $_POST['qv_total_general'] ) );
 	}
+}
 
-	/* Registrar los ajustes */
-	public function register_settings() {
-		register_setting( 'qv_settings_group', 'qv_google_maps_api_key', [
-			'type'              => 'string',
-			'sanitize_callback' => 'sanitize_text_field',
-			'default'           => '',
-		] );
 
-		register_setting( 'qv_settings_group', 'qv_adicional_viaje_corto', [
-			'type'              => 'number',
-			'sanitize_callback' => 'floatval',
-			'default'           => 0,
-		] );
-	}
+/* Añadir submenú dentro del CPT "Viajes" */
+public function add_settings_page() {
+	add_submenu_page(
+		'edit.php?post_type=viaje',
+		'Ajustes de Viajes',
+		'Ajustes',
+		'manage_options',
+		'qv-settings',
+		[ $this, 'render_settings_page' ]
+	);
+}
 
-	/* Renderizar la página de ajustes */
-	public function render_settings_page() {
-		$api_key   = get_option( 'qv_google_maps_api_key', '' );
-		$adicional = get_option( 'qv_adicional_viaje_corto', 0 );
-		?>
-		<div class="wrap">
-			<h1>Ajustes de Quiero Viajes</h1>
-			<form method="post" action="options.php">
-				<?php settings_fields( 'qv_settings_group' ); ?>
-				<?php do_settings_sections( 'qv_settings_group' ); ?>
+/* Registrar los ajustes */
+public function register_settings() {
+	register_setting( 'qv_settings_group', 'qv_google_maps_api_key', [
+		'type'              => 'string',
+		'sanitize_callback' => 'sanitize_text_field',
+		'default'           => '',
+	] );
 
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="qv_google_maps_api_key">Google Maps API Key</label></th>
-						<td>
-							<input type="text" name="qv_google_maps_api_key" id="qv_google_maps_api_key"
-							value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" />
-							<p class="description">Tu clave de la API de Google Maps (no se mostrará públicamente).</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="qv_adicional_viaje_corto">Adicional viaje corto ($)</label></th>
-						<td>
-							<input type="number" step="0.01" name="qv_adicional_viaje_corto" id="qv_adicional_viaje_corto"
-							value="<?php echo esc_attr( $adicional ); ?>" class="small-text" />
-							<p class="description">Importe adicional aplicado a viajes cortos (en pesos).</p>
-						</td>
-					</tr>
-				</table>
+	register_setting( 'qv_settings_group', 'qv_adicional_viaje_corto', [
+		'type'              => 'number',
+		'sanitize_callback' => 'floatval',
+		'default'           => 0,
+	] );
+}
 
-				<?php submit_button( 'Guardar ajustes' ); ?>
-			</form>
-		</div>
-		<?php
-	}
+/* Renderizar la página de ajustes */
+public function render_settings_page() {
+	$api_key   = get_option( 'qv_google_maps_api_key', '' );
+	$adicional = get_option( 'qv_adicional_viaje_corto', 0 );
+	?>
+	<div class="wrap">
+		<h1>Ajustes de Quiero Viajes</h1>
+		<form method="post" action="options.php">
+			<?php settings_fields( 'qv_settings_group' ); ?>
+			<?php do_settings_sections( 'qv_settings_group' ); ?>
+
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="qv_google_maps_api_key">Google Maps API Key</label></th>
+					<td>
+						<input type="text" name="qv_google_maps_api_key" id="qv_google_maps_api_key"
+						value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" />
+						<p class="description">Tu clave de la API de Google Maps (no se mostrará públicamente).</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="qv_adicional_viaje_corto">Adicional viaje corto ($)</label></th>
+					<td>
+						<input type="number" step="0.01" name="qv_adicional_viaje_corto" id="qv_adicional_viaje_corto"
+						value="<?php echo esc_attr( $adicional ); ?>" class="small-text" />
+						<p class="description">Importe adicional aplicado a viajes cortos (en pesos).</p>
+					</td>
+				</tr>
+			</table>
+
+			<?php submit_button( 'Guardar ajustes' ); ?>
+		</form>
+	</div>
+	<?php
+}
 
 }
 

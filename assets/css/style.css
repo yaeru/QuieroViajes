@@ -5,6 +5,7 @@
 	--qv-primary: #c14242;
 	--qv-dark: #333;
 	--qv-light: white;
+	--qv-muted: #f0f0f1;
 	--qv-radius: 10px;
 	--qv-breakpoints-md: 981px;
 }
@@ -15,6 +16,7 @@
 	margin-bottom: 0;
 	list-style: none;
 }
+
 /*Grilla*/
 .qv-grid {
 	display: grid;

@@ -1,5 +1,52 @@
+:root {
+	--qv-gap: 20px;
+	--qv-padding-sm: 15px;
+	--qv-padding-lg: 30px;
+	--qv-primary: #c14242;
+	--qv-dark: #333;
+	--qv-light: white;
+	--qv-muted: #f0f0f1;
+	--qv-radius: 10px;
+	--qv-breakpoints-md: 981px;
+}
+
 .qv-metabox input, .qv-metabox select, .qv-metabox textarea {
-    width: 100%;
-    max-width: 400px;
-    margin-bottom: 0;
+	width: 100%;
+	max-width: 400px;
+	margin-bottom: 0;
+}
+
+#qvGastosExtraTable {
+	border: 0;
+	input[type="text"] {
+		width: 90%;
+	}
+	input[type="number"] {
+		width: 25%;
+		text-align: right;
+	}
+	td {
+		padding: 4px 0;
+		vertical-align: middle;
+	}
+	tbody {
+		tr:nth-child(odd) {
+			background-color: var(--qv-muted);
+		}
+	}
+
+	button.remove-row {
+		color: #a00;
+		border: none;
+		background: none;
+		cursor: pointer;
+	}
+}
+
+/*Resumen*/
+#qvResumen {
+	.qv-resumen-total {
+		font-weight: bold;
+		font-size: 1.5em;
+	}
 }

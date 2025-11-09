@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.3
+ * Version: 0.1.4
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2
@@ -25,17 +25,31 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-qv-templates.php';
 
 // Cargar estilos del frontend del plugin
 function qv_enqueue_frontend_styles() {
-    // Asegura que solo se cargue en el frontend
 	if ( ! is_admin() ) {
 		wp_enqueue_style(
 			'qv-frontend-style',
 			plugin_dir_url( __FILE__ ) . 'assets/css/style.css',
 			array(),
-            filemtime( plugin_dir_path( __FILE__ ) . 'assets/css/style.css' ) // cache-busting automático
-        );
+			filemtime( plugin_dir_path( __FILE__ ) . 'assets/css/style.css' )
+		);
 	}
 }
 add_action( 'wp_enqueue_scripts', 'qv_enqueue_frontend_styles' );
+
+// Cargar estilos solo en el backend (área de administración)
+function qv_enqueue_admin_styles( $hook ) {
+	global $post_type;
+	if ( $post_type === 'viaje' ) {
+		wp_enqueue_style(
+			'qv-admin-style',
+			plugin_dir_url( __FILE__ ) . 'assets/css/admin.css',
+			array(),
+			filemtime( plugin_dir_path( __FILE__ ) . 'assets/css/admin.css' )
+		);
+	}
+}
+add_action( 'admin_enqueue_scripts', 'qv_enqueue_admin_styles' );
+
 
 
 // Inicializar plugin
