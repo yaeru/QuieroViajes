@@ -7,8 +7,7 @@ add_action('wp_enqueue_scripts', function() {
         // Cargar Google Maps API
         wp_enqueue_script(
             'google-maps',
-            //'https://maps.googleapis.com/maps/api/js?key=AIzaSyAq60a-o17nMZ5QYINh87y1tmDObUADLAs&libraries=places',
-            'https://maps.googleapis.com/maps/api/js?key=' . esc_attr($api_key) . '&libraries=places',
+            'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( get_option('qv_google_maps_api_key') ) . '&libraries=places',
             [],
             null,
             true

@@ -37,7 +37,7 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 </pre>
 <header class="qv-header">
 	<h2>
-		🏷 #123456 - 📅<?php echo esc_html($fecha); ?> - 🕐 <?php echo esc_html($hora); ?> hs
+		🏷 #123456 - 📅 <?php echo esc_html($fecha); ?> - 🕐 <?php echo esc_html($hora); ?> hs
 	</h2>
 	<h3><strong>Estado:</strong> <?php echo esc_html( ucfirst( $estado ) ); ?></h3>
 </header>
@@ -46,19 +46,19 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 	<aside class="col">
 		<div class="qv-card">
 			<article id="qv-chip-info">
-				<div class="qv-chip">
-					<!-- <p class="qv-chip-icon qv-chip-distancia">
+				<!-- <div class="qv-chip">
+					<p class="qv-chip-icon qv-chip-distancia">
 						Distancia<br>
 						<span class="qv-resaltado"><?php echo $distancia ? esc_html($distancia . ' km') : 'No disponible'; ?></span>
-					</p> -->
-					<!-- <p class="qv-chip-icon qv-chip-importe">
+					</p>
+					<p class="qv-chip-icon qv-chip-importe">
 						Importe total<br>
 						<span class="qv-resaltado"><?php echo $importe_total ? '$ ' . esc_html(number_format($importe_total, 2)) : '$ -'; ?></span>
-					</p> -->
-					<!-- <p class="qv-chip-icon qv-chip-importe">Importe x km<br>
+					</p>
+					<p class="qv-chip-icon qv-chip-importe">Importe x km<br>
 						<span class="qv-resaltado">$ <?php echo esc_html($importe_km); ?></span>
-					</p> -->
-				</div>
+					</p>
+				</div> -->
 
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-distancia">
@@ -92,9 +92,16 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 							</p>
 						</div>
 					</div>
-					<a href="#" class="qv-perfil-action">
-						Llamar Conductor <?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>
-					</a>
+					<?php if (get_user_meta($conductor->ID, 'celular', true)): ?>
+					<div class="qv-perfil-action qv-grid qv-grid-phone">
+						<a href="tel:+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn">
+							Llamar
+						</a>
+						<a href="https://wa.me/+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn" target="_blank">
+							Whatsapp
+						</a>
+					</div>
+					<?php endif; ?>
 				<?php else: ?>
 					<p><em>No hay conductor asignado aún.</em></p>
 				<?php endif; ?>
@@ -137,9 +144,14 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 					</div>
 
 					<?php if ($telefono): ?>
-						<a href="tel:<?php echo esc_attr($telefono); ?>" class="qv-perfil-action">
-							Llamar Pasajero <?php echo esc_html($pasajero->display_name); ?>
-						</a>
+						<div class="qv-perfil-action qv-grid qv-grid-phone">
+							<a href="tel:+549<?php echo esc_attr($telefono); ?>" class="qv-btn">
+								Llamar
+							</a>
+							<a href="https://wa.me/+549<?php echo esc_attr($telefono); ?>" class="qv-btn" target="_blank">
+								Whatsapp
+							</a>
+						</div>
 					<?php endif; ?>
 
 				<?php else: ?>

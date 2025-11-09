@@ -1,9 +1,12 @@
 :root {
 	--qv-gap: 20px;
+	--qv-padding-sm: 15px;
+	--qv-padding-lg: 30px;
 	--qv-primary: #c14242;
 	--qv-dark: #333;
 	--qv-light: white;
 	--qv-radius: 10px;
+	--qv-breakpoints-md: 981px;
 }
 
 /*helpers*/
@@ -17,17 +20,19 @@
 	display: grid;
 	gap: var(--qv-gap);
 }
-.qv-grid-1-1 {
-	grid-template-columns: repeat(2, 1fr);
-}
-.qv-grid-1-2 {
-	grid-template-columns: 1fr 2fr;
-}
-.qv-grid-1-3 {
-	grid-template-columns: 1fr 3fr;
-}
-.qv-grid-2-3 {
-	grid-template-columns: 2fr 3fr;
+@media (min-width: 981px) {
+	.qv-grid-1-1 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.qv-grid-1-2 {
+		grid-template-columns: 1fr 2fr;
+	}
+	.qv-grid-1-3 {
+		grid-template-columns: 1fr 3fr;
+	}
+	.qv-grid-2-3 {
+		grid-template-columns: 2fr 3fr;
+	}
 }
 
 .qv-header {
@@ -40,6 +45,15 @@ p {
 	margin-bottom: 10px;
 	line-height: 1.5em;
 }
+.qv-btn {
+	padding: 5px 10px;
+	display: block;
+	border-radius: var(--qv-radius);
+	background-color: var(--qv-primary);
+	text-align: center;
+	color: var(--qv-light);
+}
+
 .qv-chip+.qv-chip {
 	margin-top: 30px;
 }
@@ -80,6 +94,10 @@ p {
 		grid-template-columns: 70px 1fr;
 		align-items: center;
 	}
+	.qv-grid-phone {
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 10px;
+	}
 	p {
 		margin-bottom: 0;
 	}
@@ -90,12 +108,6 @@ p {
 	}
 	.qv-perfil-action {
 		margin-top: 20px;
-		padding: 5px 10px;
-		display: block;
-		border-radius: var(--qv-radius);
-		background-color: var(--qv-primary);
-		text-align: center;
-		color: var(--qv-light);
 	}
 }
 
@@ -106,10 +118,15 @@ p {
 }
 
 .qv-card {
-	padding: 15px 30px;
+	padding: var(--qv-padding-lg) var(--qv-padding-sm);
 	background-color: white;
 	border: solid 1px #ccc;
 	border-radius: 10px;
+}
+@media (min-width: 981px) {
+	.qv-card {
+		padding:  var(--qv-padding-lg);
+	}
 }
 .qv-card+.qv-card {
 	margin-top: var(--qv-gap);
@@ -120,7 +137,11 @@ p {
 
 #qvChipConductor {}
 #qvChipPasajero {}
-#qvChipObservaciones {}
+#qvChipObservaciones {
+	p {
+		margin-bottom: 0;
+	}
+}
 #qvMainMap {
 	width: 100%;
 	height: 100%;

@@ -1,3 +1,21 @@
+# Quiero Viajes
+Admin de viajes empresariales con google maps para wordpress.
+
+## Instucciones
+
+### API Key
+Activar API en google cloud con las siguientes bibliotecas
+- Places API
+- Places API (New)
+- Directions API
+- Distance Matrix API
+- Maps JavaScript API
+
+### Cargar API en Wordpress
+API Key en wp-config.php, ejemplo define( 'QV_GOOGLE_MAPS_API_KEY', 'YOURAPIKEYHERE' );
+
+
+
 ## Listado de tareas
 
 1-Instalar Google Maps en vez del actual,  ya que es un grupo muy reducido, el personal que va a utilizar el sistema. Estuve haciendo un recuento de los viajes, y entre las 3 empresas que me pedirían los traslados en esta página, no superan los 300 viajes mensuales
