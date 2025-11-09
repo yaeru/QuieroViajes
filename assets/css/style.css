@@ -1,0 +1,123 @@
+:root {
+	--qv-gap: 20px;
+	--qv-primary: #c14242;
+	--qv-dark: #333;
+	--qv-light: white;
+	--qv-radius: 10px;
+}
+
+/*helpers*/
+.qv-list {
+	margin-left: 0;
+	margin-bottom: 0;
+	list-style: none;
+}
+/*Grilla*/
+.qv-grid {
+	display: grid;
+	gap: var(--qv-gap);
+}
+.qv-grid-1-1 {
+	grid-template-columns: repeat(2, 1fr);
+}
+.qv-grid-1-2 {
+	grid-template-columns: 1fr 2fr;
+}
+.qv-grid-1-3 {
+	grid-template-columns: 1fr 3fr;
+}
+.qv-grid-2-3 {
+	grid-template-columns: 2fr 3fr;
+}
+
+.qv-header {
+	h1 {
+		margin-bottom: 0;
+	}
+}
+
+p {
+	margin-bottom: 10px;
+	line-height: 1.5em;
+}
+.qv-chip+.qv-chip {
+	margin-top: 30px;
+}
+.qv-chip-icon {
+	padding-left: 40px;
+	position: relative;
+}
+.qv-chip-icon:before {
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 30px;
+	height: 30px;
+	font-size: 1.5em;
+	text-align: center;
+	object-fit: contain;
+}
+.qv-chip-importe:before {
+	content: "💲";
+}
+.qv-chip-distancia:before {
+	content: "🌎";
+}
+.qv-chip-origen:before, .qv-chip-destino:before {
+	content: "📍";
+}
+
+.qv-avatar {
+	img {
+		border-radius: 100%;
+	}
+}
+.qv-chip-viaje +.qv-chip-viaje {
+	margin-top: 20px;
+}
+.qv-chip-viaje-perfil {
+	.qv-grid {
+		grid-template-columns: 70px 1fr;
+		align-items: center;
+	}
+	p {
+		margin-bottom: 0;
+	}
+	.qv-perfil-name {
+		margin-bottom: 5px;
+		font-weight: bold;
+		font-size: 1.2em;
+	}
+	.qv-perfil-action {
+		margin-top: 20px;
+		padding: 5px 10px;
+		display: block;
+		border-radius: var(--qv-radius);
+		background-color: var(--qv-primary);
+		text-align: center;
+		color: var(--qv-light);
+	}
+}
+#qv-conductor {}
+#qv-pasajero {}
+
+
+
+.qv-resaltado {
+	/*font-size: 1.3em;*/
+	color: var(--qv-dark);
+	font-weight: 600;
+}
+
+.qv-card {
+	padding: 15px 30px;
+	background-color: white;
+	border: solid 1px #ccc;
+	border-radius: 10px;
+}
+.qv-card+.qv-card {
+	margin-top: var(--qv-gap);
+}
+.site-content {
+	padding-bottom: 60px;
+}
