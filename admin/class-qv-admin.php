@@ -536,8 +536,8 @@ class QV_Admin {
 			<!-- Hidden inputs para lat/lng -->
 			<input type="hidden" id="qv_origen_lat" value="<?php echo esc_attr($origen_lat); ?>" />
 			<input type="hidden" id="qv_origen_lng" value="<?php echo esc_attr($origen_lng); ?>" />
-			<input type="" id="qv_destino_lat" value="<?php echo esc_attr($destino_lat); ?>" />
-			<input type="" id="qv_destino_lng" value="<?php echo esc_attr($destino_lng); ?>" />
+			<input type="hidden" id="qv_destino_lat" value="<?php echo esc_attr($destino_lat); ?>" />
+			<input type="hidden" id="qv_destino_lng" value="<?php echo esc_attr($destino_lng); ?>" />
 			<input type="hidden" id="qv_importe_km" value="<?php echo esc_attr($importe_km); ?>" />
 
 			<input type="hidden" id="_qv_adicional_aplicado" value="<?php echo esc_attr($adicional_aplicado); ?>" />
