@@ -24,6 +24,7 @@ $destino_lng = get_post_meta($post->ID, '_qv_destino_lng', true);
 
 $conductor_id = get_post_meta($post->ID, '_qv_conductor', true);
 $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
+$foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 ?>
 
@@ -42,7 +43,7 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 	<h3><strong>Estado:</strong> <?php echo esc_html( ucfirst( $estado ) ); ?></h3>
 </header>
 
-<div class="viaje-details qv-grid qv-grid-2-3">
+<div id="qvViajeDetalles" class="qv-grid qv-grid-2-3">
 	<aside class="col">
 		<div class="qv-card">
 			<article id="qv-chip-info">
@@ -67,10 +68,6 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
 					</p>
 				</div> -->
-				<p class="qv-chip-icon qv-chip-distancia">
-						Origen lat<br>
-						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
-					</p>
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
 						<span class="qv-resaltado"><?php echo esc_html($origen); ?></span>
@@ -87,25 +84,35 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 					<div class="qv-grid">
 						<figure class="qv-avatar">
 							<img src="https://secure.gravatar.com/avatar/696b67f778b73fa27f200715f32c055b934c433781081dc64f3103783dc6d403?s=100&d=mm&r=g" width="100" height="100">
+							<?php 
+						if ($foto_auto_id) {
+							echo '<img src="' . esc_url(wp_get_attachment_url($foto_auto_id)) . '" alt="Vehículo del conductor" width="100" height="100"">';
+						}
+						?>
 						</figure>
 						<div>
 							<p class="qv-perfil-name">
 								<?php echo esc_html($conductor->display_name); ?>
 							</p>
-							<p>
-								<?php echo esc_html(get_user_meta($conductor->ID, 'marca', true)); ?> <?php echo esc_html(get_user_meta($conductor->ID, 'modelo', true)); ?> - AAA-123456786
+							<p class="qv-perfil-patente">
+								<?php echo esc_html(get_user_meta($conductor->ID, 'patente', true)); ?>
+
+							</p>
+							<p class="qv-perfil-auto">
+								<?php echo esc_html(get_user_meta($conductor->ID, 'marca', true)); ?> <?php echo esc_html(get_user_meta($conductor->ID, 'modelo', true)); ?>
 							</p>
 						</div>
 					</div>
+
 					<?php if (get_user_meta($conductor->ID, 'celular', true)): ?>
-					<div class="qv-perfil-action qv-grid qv-grid-phone">
-						<a href="tel:+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn">
-							Llamar
-						</a>
-						<a href="https://wa.me/+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn" target="_blank">
-							Whatsapp
-						</a>
-					</div>
+						<div class="qv-perfil-action qv-grid qv-grid-phone">
+							<a href="tel:+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn">
+								Llamar
+							</a>
+							<a href="https://wa.me/+549<?php echo esc_html(get_user_meta($conductor->ID, 'celular', true)); ?>" class="qv-btn" target="_blank">
+								Whatsapp
+							</a>
+						</div>
 					<?php endif; ?>
 				<?php else: ?>
 					<p><em>No hay conductor asignado aún.</em></p>

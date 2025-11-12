@@ -56,6 +56,12 @@ p {
 	color: var(--qv-light);
 }
 
+#qvViajeDetalles {
+	.qv-card {
+		height: 100%;
+	}
+}
+
 .qv-chip+.qv-chip {
 	margin-top: 30px;
 }
@@ -86,6 +92,7 @@ p {
 .qv-avatar {
 	img {
 		border-radius: 100%;
+		object-fit: cover;
 	}
 }
 .qv-chip-viaje +.qv-chip-viaje {
@@ -137,7 +144,41 @@ p {
 	padding-bottom: 60px;
 }
 
-#qvChipConductor {}
+#qvChipConductor {
+	.qv-grid {
+		grid-template-columns: 135px 1fr;
+		.qv-avatar {
+			display: flex;
+			img {
+				width: 70px;
+				height: 70px;
+				z-index: 2;
+			}
+			img:nth-child(2) {
+				margin-left: -10px;
+				z-index: 1;
+			}
+		}
+		> div {
+			text-align: right;
+			p {
+				margin-bottom: 0px;
+				line-height: 1.2em;
+			}
+			.qv-perfil-name {
+				margin-bottom: 0px;
+				font-weight: normal;
+				font-size: 1em;
+				text-transform: uppercase;
+			}
+			.qv-perfil-patente {
+				font-weight: bold;
+				font-size: 1.3em;
+			}
+			.qv-perfil-auto {}
+		}
+	}
+}
 #qvChipPasajero {}
 #qvChipObservaciones {
 	p {

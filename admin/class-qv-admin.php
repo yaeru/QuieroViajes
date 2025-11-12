@@ -11,9 +11,7 @@ class QV_Admin {
 		add_action( 'save_post', [ $this, 'save_gastos_extra_metabox' ] );
 		add_action( 'save_post', [ $this, 'save_resumen_metabox' ] );
 
-		
-
-		// Avisos de error Google Maps
+		/* Avisos de error Google Maps */
 		add_action( 'admin_head', [ $this, 'gmaps_auth_failure_handler' ] );
 		add_action( 'admin_notices', [ $this, 'gmaps_admin_notice' ] );
 	}
@@ -44,7 +42,7 @@ class QV_Admin {
 		}
 	}
 
-	// Inyecta handler para capturar errores de Google Maps
+	/* Inyecta handler para capturar errores de Google Maps */
 	public function gmaps_auth_failure_handler() {
 		?>
 		<script>
@@ -57,7 +55,7 @@ class QV_Admin {
 		<?php
 	}
 
-	// Muestra aviso en admin si hay error
+	/* Muestra aviso en admin si hay error */
 	public function gmaps_admin_notice() {
 		?>
 		<div class="notice notice-error is-dismissible qv-gmaps-error" style="display:none;">
@@ -118,6 +116,81 @@ class QV_Admin {
 		);
 	}
 
+	/* Metabox Origen destino */
+	public function render_origen_destino_metabox( $post ) {
+		wp_nonce_field( 'qv_save_origen_destino', 'qv_origen_destino_nonce' );
+
+		$origen      = get_post_meta( $post->ID, '_qv_origen', true );
+		$origen_lat  = get_post_meta( $post->ID, '_qv_origen_lat', true );
+		$origen_lng  = get_post_meta( $post->ID, '_qv_origen_lng', true );
+
+		$destino     = get_post_meta( $post->ID, '_qv_destino', true );
+		$destino_lat = get_post_meta( $post->ID, '_qv_destino_lat', true );
+		$destino_lng = get_post_meta( $post->ID, '_qv_destino_lng', true );
+		$importe_km    = get_post_meta( $post->ID, '_qv_importe_km', true );
+		?>
+		<table class="form-table qv-metabox">
+			<tbody>
+				<tr>
+					<th>
+						<label>Origen:</label>
+					</th>
+					<td>
+						<input type="text" id="qv_origen" name="qv_origen" value="<?php echo esc_attr( $origen ); ?>" style="width:100%;">
+						<input type="hidden" id="qv_origen_lat" name="qv_origen_lat" value="<?php echo esc_attr( $origen_lat ); ?>">
+						<input type="hidden" id="qv_origen_lng" name="qv_origen_lng" value="<?php echo esc_attr( $origen_lng ); ?>">
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<label>Destino:</label>
+					</th>
+					<td>
+						<input type="text" id="qv_destino" name="qv_destino" value="<?php echo esc_attr( $destino ); ?>" style="width:100%;">
+						<input type="hidden" id="qv_destino_lat" name="qv_destino_lat" value="<?php echo esc_attr( $destino_lat ); ?>">
+						<input type="hidden" id="qv_destino_lng" name="qv_destino_lng" value="<?php echo esc_attr( $destino_lng ); ?>">
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<label>Importe por km:</label>
+					</th>
+					<td>
+						<input type="number" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<?php
+	}
+
+	/* Guardar metabox Origen destino */
+	public function save_origen_destino_metabox( $post_id ) {
+		if ( ! isset( $_POST['qv_origen_destino_nonce'] ) || ! wp_verify_nonce( $_POST['qv_origen_destino_nonce'], 'qv_save_origen_destino' ) ) {
+			return;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+		if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+		$fields = [
+			'qv_origen'      => '_qv_origen',
+			'qv_origen_lat'  => '_qv_origen_lat',
+			'qv_origen_lng'  => '_qv_origen_lng',
+			'qv_destino'     => '_qv_destino',
+			'qv_destino_lat' => '_qv_destino_lat',
+			'qv_destino_lng' => '_qv_destino_lng',
+			'qv_importe_km'    => '_qv_importe_km',
+		];
+
+		foreach ( $fields as $form_field => $meta_key ) {
+			if ( isset( $_POST[$form_field] ) ) {
+				update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[$form_field] ) );
+			}
+		}
+	}
+
 	/* Metabox Detalles del Viaje */
 	public function render_detalles_metabox( $post ) {
 		wp_nonce_field( 'qv_save_detalles', 'qv_detalles_nonce' );
@@ -126,12 +199,12 @@ class QV_Admin {
 		$fecha         = get_post_meta( $post->ID, '_qv_fecha', true );
 		$hora          = get_post_meta( $post->ID, '_qv_hora', true );
 		$empresa_id    = get_post_meta( $post->ID, '_qv_empresa', true );
-		$importe_km    = get_post_meta( $post->ID, '_qv_importe_km', true );
+		
 		$pago          = get_post_meta( $post->ID, '_qv_pago', true );
 		$observaciones = get_post_meta( $post->ID, '_qv_observaciones', true );
 		$conductor_id  = get_post_meta( $post->ID, '_qv_conductor', true );
 
-        // Conductores
+		/* Conductores */
 		$conductores = get_users( [ 'role' => 'conductor' ] );
 
 		?>
@@ -168,14 +241,7 @@ class QV_Admin {
 						<input type="time" name="qv_hora" value="<?php echo esc_attr( $hora ); ?>">
 					</td>
 				</tr>
-				<tr>
-					<th>
-						<label>Importe por km:</label>
-					</th>
-					<td>
-						<input type="number" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
-					</td>
-				</tr>
+				
 				<tr>
 					<th>
 						<label>Forma de pago:</label>
@@ -233,7 +299,6 @@ class QV_Admin {
 			'qv_fecha'         => '_qv_fecha',
 			'qv_hora'          => '_qv_hora',
 			'qv_empresa'       => '_qv_empresa',
-			'qv_importe_km'    => '_qv_importe_km',
 			'qv_pago'          => '_qv_pago',
 			'qv_observaciones' => '_qv_observaciones',
 			'qv_conductor'     => '_qv_conductor',
@@ -254,7 +319,7 @@ class QV_Admin {
 		$pasajero_id = get_post_meta( $post->ID, '_qv_pasajero', true );
 		$current_user = wp_get_current_user();
 
-		// Si el usuario actual es empresa, forzamos solo su empresa
+		/* Si el usuario actual es empresa, forzamos solo su empresa */
 		$empresas = [];
 		if ( in_array( 'empresa', (array) $current_user->roles ) ) {
 			$empresas[] = $current_user;
@@ -262,11 +327,11 @@ class QV_Admin {
 			$empresas = get_users( [ 'role' => 'empresa', 'orderby' => 'display_name', 'order' => 'ASC' ] );
 		}
 
-		// Filtrar pasajeros
+		/* Filtrar pasajeros */
 		$pasajeros_args = [ 'role' => 'pasajero', 'orderby' => 'display_name', 'order' => 'ASC' ];
 		$pasajeros = get_users( $pasajeros_args );
 
-		// Si el usuario empresa está logueado, filtrar pasajeros de su empresa
+		/* Si el usuario empresa está logueado, filtrar pasajeros de su empresa */
 		if ( in_array( 'empresa', (array) $current_user->roles ) ) {
 			$empresa_id = $current_user->ID;
 			$pasajeros = array_filter( $pasajeros, function( $u ) use ( $empresa_id ) {
@@ -333,71 +398,7 @@ class QV_Admin {
 		}
 	}
 
-
-	/* Metabox Origen destino */
-	public function render_origen_destino_metabox( $post ) {
-		wp_nonce_field( 'qv_save_origen_destino', 'qv_origen_destino_nonce' );
-
-		$origen      = get_post_meta( $post->ID, '_qv_origen', true );
-		$origen_lat  = get_post_meta( $post->ID, '_qv_origen_lat', true );
-		$origen_lng  = get_post_meta( $post->ID, '_qv_origen_lng', true );
-
-		$destino     = get_post_meta( $post->ID, '_qv_destino', true );
-		$destino_lat = get_post_meta( $post->ID, '_qv_destino_lat', true );
-		$destino_lng = get_post_meta( $post->ID, '_qv_destino_lng', true );
-		?>
-		<table class="form-table qv-metabox">
-			<tbody>
-				<tr>
-					<th>
-						<label>Origen:</label>
-					</th>
-					<td>
-						<input type="text" id="qv_origen" name="qv_origen" value="<?php echo esc_attr( $origen ); ?>" style="width:100%;">
-						<input type="hidden" id="qv_origen_lat" name="qv_origen_lat" value="<?php echo esc_attr( $origen_lat ); ?>">
-						<input type="hidden" id="qv_origen_lng" name="qv_origen_lng" value="<?php echo esc_attr( $origen_lng ); ?>">
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label>Destino:</label>
-					</th>
-					<td>
-						<input type="text" id="qv_destino" name="qv_destino" value="<?php echo esc_attr( $destino ); ?>" style="width:100%;">
-						<input type="hidden" id="qv_destino_lat" name="qv_destino_lat" value="<?php echo esc_attr( $destino_lat ); ?>">
-						<input type="hidden" id="qv_destino_lng" name="qv_destino_lng" value="<?php echo esc_attr( $destino_lng ); ?>">
-					</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<?php
-	}
-
-	/* Guardar metabox Origen destino */
-	public function save_origen_destino_metabox( $post_id ) {
-		if ( ! isset( $_POST['qv_origen_destino_nonce'] ) || ! wp_verify_nonce( $_POST['qv_origen_destino_nonce'], 'qv_save_origen_destino' ) ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-		if ( ! current_user_can( 'edit_post', $post_id ) ) return;
-
-		$fields = [
-			'qv_origen'      => '_qv_origen',
-			'qv_origen_lat'  => '_qv_origen_lat',
-			'qv_origen_lng'  => '_qv_origen_lng',
-			'qv_destino'     => '_qv_destino',
-			'qv_destino_lat' => '_qv_destino_lat',
-			'qv_destino_lng' => '_qv_destino_lng',
-		];
-
-		foreach ( $fields as $form_field => $meta_key ) {
-			if ( isset( $_POST[$form_field] ) ) {
-				update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[$form_field] ) );
-			}
-		}
-	}
+	
 
 	public function render_gastos_extra_metabox( $post ) {
 		wp_nonce_field( 'guardar_gastos_extra', 'gastos_extra_nonce' );
@@ -477,7 +478,6 @@ class QV_Admin {
 		}
 	}
 
-
 	public function render_resumen_metabox( $post ) {
 		/* Obtener valores guardados */
 		$origen       = get_post_meta( $post->ID, '_qv_origen', true );
@@ -490,11 +490,11 @@ class QV_Admin {
 		$distancia    = get_post_meta( $post->ID, '_qv_distancia', true );
 		$distancia    = floatval( $distancia );
 
-		// Obtener adicional configurado
+		/* Obtener adicional configurado */
 		$adicional_viaje_corto = get_option( 'qv_adicional_viaje_corto', 0 );
 		$adicional_viaje_corto = floatval( $adicional_viaje_corto );
 
-		// Gastos extra
+		/* Gastos extra */
 		$gastos_extra = get_post_meta( $post->ID, '_gastos_extra', true );
 		if ( ! is_array( $gastos_extra ) ) $gastos_extra = [];
 
@@ -516,14 +516,7 @@ class QV_Admin {
 			}
 		}
 
-		// Si el viaje es corto (<10 km), aplicar el adicional
-		// $adicional_aplicado = 0;
-		// if ( $distancia > 0 && $distancia < 10 ) {
-		// 	$adicional_aplicado = $adicional_viaje_corto;
-		// }
-
 		$adicional_aplicado = get_post_meta( $post->ID, '_qv_adicional_aplicado', true );
-
 
 		//$total_general = round( floatval( $importe_estimado ) + $total_gastos, 2 );
 		$total_general = round( floatval( $importe_estimado ) + $total_gastos + $adicional_aplicado, 2 );
@@ -534,10 +527,8 @@ class QV_Admin {
 			<p><strong>Destino:</strong> <?php echo esc_html($destino); ?></p>
 
 			<!-- Hidden inputs para lat/lng -->
-			<input type="hidden" id="qv_origen_lat" value="<?php echo esc_attr($origen_lat); ?>" />
-			<input type="hidden" id="qv_origen_lng" value="<?php echo esc_attr($origen_lng); ?>" />
-			<input type="hidden" id="qv_destino_lat" value="<?php echo esc_attr($destino_lat); ?>" />
-			<input type="hidden" id="qv_destino_lng" value="<?php echo esc_attr($destino_lng); ?>" />
+			<div style="display:none" data-origen-lat="<?php echo esc_attr($origen_lat); ?>" data-origen-lng="<?php echo esc_attr($origen_lng); ?>" data-destino-lat="<?php echo esc_attr($destino_lat); ?>" data-destino-lng="<?php echo esc_attr($destino_lng); ?>">
+			</div>
 			<input type="hidden" id="qv_importe_km" value="<?php echo esc_attr($importe_km); ?>" />
 
 			<input type="hidden" id="_qv_adicional_aplicado" value="<?php echo esc_attr($adicional_aplicado); ?>" />
@@ -596,21 +587,21 @@ class QV_Admin {
 	}
 }
 add_action('save_post', function( $post_id ) {
-    // Evitar autosaves, revisiones, etc.
+	/* Evitar autosaves, revisiones, etc. */
 	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
-    if ( get_post_type($post_id) !== 'viaje' ) return; // ajustá el CPT si tiene otro nombre
+	if ( get_post_type($post_id) !== 'viaje' ) return;
 
-    $adicional_aplicado = 0.0;
+	$adicional_aplicado = 0.0;
 
-    /* Convertir distancia a número real siempre */
-    $distancia = floatval(str_replace(',', '.', (string)$distancia_raw));
-    $adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
+	/* Convertir distancia a número real siempre */
+	$distancia = floatval(str_replace(',', '.', (string)$distancia_raw));
+	$adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
 
-    /* Aplicar el adicional si la distancia es menor a 10 km */
-    if ($distancia < 10) {
-    	$adicional_aplicado = $adicional_viaje_corto;
-    }
+	/* Aplicar el adicional si la distancia es menor a 10 km */
+	if ($distancia < 10) {
+		$adicional_aplicado = $adicional_viaje_corto;
+	}
 
-    // Guardar el resultado como metadato
-    update_post_meta( $post_id, '_qv_adicional_aplicado', $adicional_aplicado );
+	/* Guardar el resultado como metadato */
+	update_post_meta( $post_id, '_qv_adicional_aplicado', $adicional_aplicado );
 }, 20, 1);
