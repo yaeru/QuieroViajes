@@ -156,7 +156,7 @@ class QV_Admin {
 						<label>Importe por km:</label>
 					</th>
 					<td>
-						<input type="number" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
+						<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
 					</td>
 				</tr>
 			</tbody>
@@ -396,10 +396,9 @@ class QV_Admin {
 		if ( isset($_POST['qv_pasajero']) ) {
 			update_post_meta( $post_id, '_qv_pasajero', sanitize_text_field( $_POST['qv_pasajero'] ) );
 		}
-	}
+	}	
 
-	
-
+	/* Metabox Gastos extra */
 	public function render_gastos_extra_metabox( $post ) {
 		wp_nonce_field( 'guardar_gastos_extra', 'gastos_extra_nonce' );
 
@@ -456,6 +455,7 @@ class QV_Admin {
 		<?php
 	}
 
+	/* Guardar metabox Gastos extra */
 	public function save_gastos_extra_metabox( $post_id ) {
 		if ( ! isset( $_POST['gastos_extra_nonce'] ) || ! wp_verify_nonce( $_POST['gastos_extra_nonce'], 'guardar_gastos_extra' ) ) {
 			return;
@@ -515,21 +515,20 @@ class QV_Admin {
 				$total_gastos += floatval( $gasto['importe'] );
 			}
 		}
-
 		$adicional_aplicado = get_post_meta( $post->ID, '_qv_adicional_aplicado', true );
-
-		//$total_general = round( floatval( $importe_estimado ) + $total_gastos, 2 );
 		$total_general = round( floatval( $importe_estimado ) + $total_gastos + $adicional_aplicado, 2 );
 
 		?>
-		<div id="qvResumen">
+		<div id="qvResumen" data-adicional-viaje-corto="<?php echo esc_attr($adicional_viaje_corto); ?>">
 			<p><strong>Origen:</strong> <?php echo esc_html($origen); ?></p>
 			<p><strong>Destino:</strong> <?php echo esc_html($destino); ?></p>
 
 			<!-- Hidden inputs para lat/lng -->
 			<div style="display:none" data-origen-lat="<?php echo esc_attr($origen_lat); ?>" data-origen-lng="<?php echo esc_attr($origen_lng); ?>" data-destino-lat="<?php echo esc_attr($destino_lat); ?>" data-destino-lng="<?php echo esc_attr($destino_lng); ?>">
 			</div>
-			<input type="hidden" id="qv_importe_km" value="<?php echo esc_attr($importe_km); ?>" />
+
+			<div style="display:none" data-importe-km="<?php echo esc_attr($importe_km); ?>">
+			</div>
 
 			<input type="hidden" id="_qv_adicional_aplicado" value="<?php echo esc_attr($adicional_aplicado); ?>" />
 			<input type="hidden" name="qv_distancia" id="qv_distancia_input" value="">
@@ -554,10 +553,10 @@ class QV_Admin {
 					<?php endforeach; ?>
 				</ul>
 			<?php endif; ?>
-
-			<?php if ( $adicional_aplicado > 0 ) : ?>
-				<p><strong>Adicional por viaje corto:</strong> $<?php echo esc_html( number_format( $adicional_aplicado, 2 ) ); ?></p>
-			<?php endif; ?>
+			<p id="qv-adicional" style="<?php echo ($adicional_aplicado > 0) ? '' : 'display:none;'; ?>">
+				<strong>Adicional por viaje corto:</strong> 
+				$<span id="qv-adicional-valor"><?php echo esc_html( number_format( $adicional_aplicado, 2 ) ); ?></span>
+			</p>
 
 			<hr>
 			<p class="qv-resumen-total"><strong>Total:</strong> $<?php echo esc_html( number_format( $total_general, 2 ) ); ?></p>
@@ -587,21 +586,26 @@ class QV_Admin {
 	}
 }
 add_action('save_post', function( $post_id ) {
-	/* Evitar autosaves, revisiones, etc. */
+	// Evitar autosaves, revisiones, etc.
 	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
 	if ( get_post_type($post_id) !== 'viaje' ) return;
 
-	$adicional_aplicado = 0.0;
+	// Obtener la distancia guardada en metadatos
+	$distancia = get_post_meta($post_id, '_qv_distancia', true);
+	$distancia = floatval(str_replace(',', '.', (string)$distancia));
 
-	/* Convertir distancia a número real siempre */
-	$distancia = floatval(str_replace(',', '.', (string)$distancia_raw));
+	// Obtener el adicional configurado en ajustes
 	$adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
 
-	/* Aplicar el adicional si la distancia es menor a 10 km */
-	if ($distancia < 10) {
+	// Inicializar
+	$adicional_aplicado = 0.0;
+
+	// ✅ Aplicar el adicional si la distancia es menor o igual a 10 km
+	if ($distancia > 0 && $distancia <= 10 && $adicional_viaje_corto > 0) {
 		$adicional_aplicado = $adicional_viaje_corto;
 	}
 
-	/* Guardar el resultado como metadato */
-	update_post_meta( $post_id, '_qv_adicional_aplicado', $adicional_aplicado );
+	// Guardar el resultado como metadato
+	update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
 }, 20, 1);
+
