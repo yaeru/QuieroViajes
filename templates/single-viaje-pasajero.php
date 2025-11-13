@@ -11,8 +11,6 @@ $hora = get_post_meta($post->ID, '_qv_hora', true);
 $origen = get_post_meta($post->ID, '_qv_origen', true);
 $destino = get_post_meta($post->ID, '_qv_destino', true);
 $distancia = get_post_meta($post->ID, '_qv_distancia', true);
-$importe_km = get_post_meta($post->ID, '_qv_importe_km', true);
-$importe_total = get_post_meta($post->ID, '_qv_importe', true);
 $total_general = get_post_meta($post->ID, '_qv_total_general', true);
 $observaciones = get_post_meta($post->ID, '_qv_observaciones', true);
 
@@ -28,24 +26,30 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 ?>
 
-<!-- <pre>
+<pre >
 	<?php
 	$metas = get_post_meta( $post->ID );
 	foreach ( $metas as $key => $value ) {
 		echo esc_html($key) . ': ' . esc_html(is_array($value) ? implode(', ', $value) : $value) . "\n";
 	}
 	?>
-</pre> -->
-<header class="qv-header">
-	<h2>
-		🏷 #123456 - 📅 <?php echo esc_html($fecha); ?> - 🕐 <?php echo esc_html($hora); ?> hs
-	</h2>
-	<h3><strong>Estado:</strong> <?php echo esc_html( ucfirst( $estado ) ); ?></h3>
-</header>
+</pre>
 
-<div id="qvViajeDetalles" class="qv-grid qv-grid-2-3">
+<div id="qvViajeDetalles" class="qv-grid">
 	<aside class="col">
 		<div class="qv-card">
+			<article id="qvChipStatus" class="qv-chip-viaje">
+				<p class="qv-chip-icon qv-chip-status">
+					Estado<br>
+					<span class="qv-resaltado"><?php echo esc_html( ucfirst( $estado ) ); ?></h3></span>
+				</p>
+			</article>
+			<article id="qvChipDate" class="qv-chip-viaje">
+				<p class="qv-chip-icon qv-chip-date">
+					Fecha<br>
+					<span class="qv-resaltado"><?php echo esc_html($fecha_formateada = date_i18n( 'd M Y', strtotime( $fecha ) )); ?></span> a las <span class="qv-resaltado"><?php echo esc_html($hora); ?> hs</span>
+				</p>
+			</article>
 			<article id="qv-chip-info">
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
@@ -57,6 +61,25 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 					</p>
 				</div>
 			</article>
+
+			<article id="qvChipImporte">
+				<div class="qv-chip">
+					<p class="qv-chip-icon qv-chip-importe">Importe estimado <br>
+						<span class="qv-resaltado">
+							<?php
+							if ( $total_general !== '' ) {
+								/* Convierte a número y formatea con separador de miles "." y decimales "," */
+								$total_formateado = number_format( floatval( $total_general ), 2, ',', '.' );
+								echo '<span class="qv-resaltado">$ ' . esc_html( $total_formateado ) . '</span>';
+							} else {
+								echo '<span class="qv-resaltado">-</span>';
+							} ?>
+							
+						</span>
+					</p>
+				</div>
+			</article>
+
 			<hr>
 			<article id="qvChipConductor" class="qv-chip-viaje qv-chip-viaje-perfil">
 				<?php if ($conductor): ?>
@@ -97,7 +120,7 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 					<p><em>No hay conductor asignado aún.</em></p>
 				<?php endif; ?>
 			</article>
-
+			
 			<?php if ( $observaciones ) : ?>
 				<article id="qvChipObservaciones" class="qv-chip-viaje">
 					<p class="">Observaciones <br>
