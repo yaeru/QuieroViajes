@@ -61,10 +61,6 @@ class QV_Conductores {
 				<td><input type="date" name="registro_vencimiento" id="registro_vencimiento" value="<?php echo esc_attr( get_user_meta( $user->ID, 'registro_vencimiento', true ) ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="auto">Auto</label></th>
-				<td><input type="text" name="auto" id="auto" value="<?php echo esc_attr( get_user_meta( $user->ID, 'auto', true ) ); ?>" class="regular-text"></td>
-			</tr>
-			<tr>
 				<th><label for="marca">Marca</label></th>
 				<td><input type="text" name="marca" id="marca" value="<?php echo esc_attr( get_user_meta( $user->ID, 'marca', true ) ); ?>" class="regular-text"></td>
 			</tr>
@@ -111,7 +107,7 @@ class QV_Conductores {
 		if ( ! current_user_can( 'edit_user', $user_id ) ) return;
 
 		/* Campos sencillos de texto/fecha/number/radio */
-		$campos = [ 'dni', 'direccion', 'celular', 'registro', 'registro_vencimiento', 'auto', 'marca', 'modelo', 'anio', 'patente', 'aire' ];
+		$campos = [ 'dni', 'direccion', 'celular', 'registro', 'registro_vencimiento', 'marca', 'modelo', 'anio', 'patente', 'aire' ];
 
 		foreach ( $campos as $campo ) {
 			if ( isset( $_POST[ $campo ] ) ) {

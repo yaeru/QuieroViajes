@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.4
+ * Version: 0.1.5
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2
@@ -19,6 +19,7 @@ define( 'QV_API', "PEPE" );
 require_once QV_PATH . 'includes/class-qv-cpt.php';
 require_once QV_PATH . 'admin/class-qv-admin.php';
 require_once QV_PATH . 'admin/class-qv-frontend.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-qv-tablas.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-conductores.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-usuarios.php';

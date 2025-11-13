@@ -28,7 +28,7 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 ?>
 
-<pre>
+<pre >
 	<?php
 	$metas = get_post_meta( $post->ID );
 	foreach ( $metas as $key => $value ) {
@@ -36,16 +36,26 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 	}
 	?>
 </pre>
-<header class="qv-header">
-	<h2>
-		🏷 #123456 - 📅 <?php echo esc_html($fecha); ?> - 🕐 <?php echo esc_html($hora); ?> hs
-	</h2>
-	<h3><strong>Estado:</strong> <?php echo esc_html( ucfirst( $estado ) ); ?></h3>
-</header>
 
-<div id="qvViajeDetalles" class="qv-grid qv-grid-2-3">
+<div id="qvViajeDetalles" class="qv-grid">
 	<aside class="col">
 		<div class="qv-card">
+			<article id="qvChipStatus" class="qv-chip-viaje">
+				<p class="qv-chip-icon qv-chip-status">
+					Estado<br>
+					<span class="qv-resaltado"><?php echo esc_html( ucfirst( $estado ) ); ?></h3></span>
+				</p>
+			</article>
+			<article id="qvChipDate" class="qv-chip-viaje">
+				<p class="qv-chip-icon qv-chip-date">
+					Fecha<br>
+					<span>
+
+						
+					</span>
+					<span class="qv-resaltado"><?php echo esc_html($fecha_formateada = date_i18n( 'd M Y', strtotime( $fecha ) )); ?></span> a las <span class="qv-resaltado"><?php echo esc_html($hora); ?> hs</span>
+				</p>
+			</article>
 			<article id="qv-chip-info">
 				<!-- <div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-distancia">
@@ -78,6 +88,7 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 					</p>
 				</div>
 			</article>
+
 			<hr>
 			<article id="qvChipConductor" class="qv-chip-viaje qv-chip-viaje-perfil">
 				<?php if ($conductor): ?>
@@ -85,10 +96,10 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 						<figure class="qv-avatar">
 							<img src="https://secure.gravatar.com/avatar/696b67f778b73fa27f200715f32c055b934c433781081dc64f3103783dc6d403?s=100&d=mm&r=g" width="100" height="100">
 							<?php 
-						if ($foto_auto_id) {
-							echo '<img src="' . esc_url(wp_get_attachment_url($foto_auto_id)) . '" alt="Vehículo del conductor" width="100" height="100"">';
-						}
-						?>
+							if ($foto_auto_id) {
+								echo '<img src="' . esc_url(wp_get_attachment_url($foto_auto_id)) . '" alt="Vehículo del conductor" width="100" height="100"">';
+							}
+							?>
 						</figure>
 						<div>
 							<p class="qv-perfil-name">

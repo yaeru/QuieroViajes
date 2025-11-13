@@ -249,7 +249,7 @@ class QV_Admin {
 					<td>
 						<select name="qv_pago">
 							<?php
-							$formas_pago = [ 'efectivo' => 'Efectivo', 'transferencia' => 'Transferencia', 'tarjeta' => 'Tarjeta' ];
+							$formas_pago = [ 'efectivo' => 'Efectivo', 'transferencia' => 'Transferencia', 'cuentaCorriente' => 'Cuenta Corriente', 'tarjeta' => 'Tarjeta' ];
 							foreach ( $formas_pago as $key => $label ) {
 								echo '<option value="'.esc_attr($key).'" '.selected($pago, $key, false).'>'.esc_html($label).'</option>';
 							}
