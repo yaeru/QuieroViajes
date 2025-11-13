@@ -2,7 +2,17 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class QV_Conductores {
+	/* Crear rol Conductor */
+	public function crear_rol_conductor() {
+		if (! get_role('conductor') ) {
+			add_role('conductor', 'Conductor', [
+				'read' => true,
+				'edit_posts' => false,
+			]);
+		}
+	}
 
+	/* Añadir menú "Mis viajes" para conductores */
 	public function init() {
 		add_action('init', [ $this, 'crear_rol_conductor' ] );
 		add_action('show_user_profile', [ $this, 'agregar_metabox_conductor' ] );
@@ -12,16 +22,122 @@ class QV_Conductores {
 
 		/* Asegurar que el formulario de edición de usuario soporte subida de archivos */
 		add_action('user_edit_form_tag', [ $this, 'user_edit_form_enctype' ] );
+
+		/* Añadir menú Mis Viajes en admin para conductores */
+		add_action('admin_menu', [ $this, 'add_conductor_menu' ] );
 	}
 
-	/* Crear rol Conductor */
-	public function crear_rol_conductor() {
-		if (! get_role('conductor') ) {
-			add_role('conductor', 'Conductor', [
-				'read' => true,
-				'edit_posts' => false,
-			]);
+	/* Registrar submenu para conductores */
+	public function add_conductor_menu() {
+		/* Solo para usuarios logueados con rol conductor (o admins) */
+		if ( ! is_user_logged_in() ) return;
+
+		$user = wp_get_current_user();
+		if ( in_array( 'conductor', (array) $user->roles ) || current_user_can( 'manage_options' ) ) {
+			/* Usamos capability 'read' para que cualquier conductor pueda entrar pero no editar */
+			add_menu_page(
+				'Mis viajes',
+				'Mis viajes',
+				'read',
+				'qv-mis-viajes',
+				[ $this, 'render_mis_viajes_page' ],
+				'dashicons-location-alt',
+				26
+			);
+			/* Si preferís un submenu bajo "Usuarios" o "Viajes" podés usar add_submenu_page en vez de add_menu_page */
 		}
+	}
+
+	/* Renderizar la página de "Mis viajes" (lista readonly) */
+	public function render_mis_viajes_page() {
+		if ( ! is_user_logged_in() ) {
+			wp_die( 'Acceso denegado' );
+		}
+
+		$user_id = get_current_user_id();
+
+		/* Si es admin ver todos (opcional), sino filtrar por conductor asignado */
+		$args = [
+			'post_type'      => 'viaje',
+			'posts_per_page' => -1,
+			'post_status'    => 'any',
+			'meta_query'     => [
+				[
+					'key'     => '_qv_conductor',
+					'value'   => $user_id,
+					'compare' => '='
+				]
+			],
+			'orderby'        => 'date',
+			'order'          => 'DESC'
+		];
+
+		/* Si es administrador mostramos todo (opcional) */
+		if ( current_user_can( 'manage_options' ) ) {
+			unset( $args['meta_query'] );
+		}
+
+		$viajes = get_posts( $args );
+		?>
+		<div class="wrap">
+			<h1>Mis viajes</h1>
+
+			<?php if ( empty( $viajes ) ) : ?>
+				<p>No hay viajes asignados.</p>
+			<?php else: ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Título</th>
+							<th>Estado</th>
+							<th>Fecha programada</th>
+							<th>Empresa</th>
+							<th>Importe total</th>
+							<th>Forma de pago</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $viajes as $viaje ) :
+							$id = $viaje->ID;
+							$titulo = get_the_title( $id );
+							$permalink = get_permalink( $id );
+							$estado = get_post_meta( $id, '_qv_estado', true );
+							$fecha = get_post_meta( $id, '_qv_fecha', true );
+							$hora  = get_post_meta( $id, '_qv_hora', true );
+							$empresa_id = get_post_meta( $id, '_qv_empresa', true );
+							$importe = get_post_meta( $id, '_qv_total_general', true );
+							if ( $importe === '' ) $importe = get_post_meta( $id, '_qv_importe_total', true );
+							$forma_pago = get_post_meta( $id, '_qv_pago', true );
+
+							/* Formateos */
+							$fecha_programada = $fecha ? date_i18n( 'd/m/Y', strtotime( $fecha ) ) : '-';
+							if ( $hora ) $fecha_programada .= ' ' . esc_html( $hora );
+							$empresa_nombre = '-';
+							if ( $empresa_id ) {
+								$user_empresa = get_user_by( 'id', intval( $empresa_id ) );
+								if ( $user_empresa ) $empresa_nombre = esc_html( $user_empresa->display_name );
+							}
+							$importe_display = '-';
+							if ( $importe !== '' && is_numeric( $importe ) ) {
+								$importe_display = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
+							}
+							?>
+							<tr>
+								<td><?php echo (int) $id; ?></td>
+								<td><a href="<?php echo esc_url( $permalink ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $titulo ); ?></a></td>
+								<td><?php echo $estado ? esc_html( ucfirst( $estado ) ) : '-'; ?></td>
+								<td><?php echo esc_html( $fecha_programada ); ?></td>
+								<td><?php echo $empresa_nombre; ?></td>
+								<td><?php echo $importe_display; ?></td>
+								<td><?php echo $forma_pago ? esc_html( ucfirst( $forma_pago ) ) : '-'; ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 
 	/* Añadir enctype multipart/form-data al formulario de edición de usuario */

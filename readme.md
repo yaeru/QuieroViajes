@@ -18,8 +18,6 @@ API Key en wp-config.php, ejemplo define( 'QV_GOOGLE_MAPS_API_KEY', 'YOURAPIKEYH
 ## Listado de tareas
 
 ### Pendiente
-
-Borrar campo Auto
 historial viajes para chofer
 Añadir importe al pasajero, Nota estimado
 luego le llega un mail al pasajero con los datos del viaje, y el importe final?
@@ -44,3 +42,7 @@ veces no lo carga ( Ver esto )
 7-Si se puede ver alguna foto del auto, tipo App Uber, una fotito de baja calidad poder subir el administrador, asi le aparece al pasajero cuando le confirmar que auto va, (si es muy difícil, lo hacemos mas adelante ).
 
 4-Revisar: donde se está cargando el viaje, aparece "valor 1"
+Borrar campo Auto
+
+tabla de viajes
+exportar csv

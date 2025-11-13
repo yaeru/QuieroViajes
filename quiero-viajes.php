@@ -52,8 +52,6 @@ function qv_enqueue_admin_styles( $hook ) {
 }
 add_action( 'admin_enqueue_scripts', 'qv_enqueue_admin_styles' );
 
-
-
 // Inicializar plugin
 function qv_init_plugin() {
     // Registrar CPTs
@@ -75,13 +73,11 @@ function qv_init_plugin() {
 		new QV_Settings_Page();
 	}
 
-
     // En frontend y backend (para interceptar plantillas)
 	$qv_templates = new QV_Templates();
 	$qv_templates->init();
 }
 add_action( 'plugins_loaded', 'qv_init_plugin' );
-
 
 
 /* Limpieza Wordpress opcional */
