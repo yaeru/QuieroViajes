@@ -220,92 +220,150 @@ new QV_Tablas();
 // Función para generar el archivo CSV y forzar su descarga
 // Función para generar el archivo CSV y forzar su descarga
 function remiseria_download_viajes_csv() {
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
-        return;
-    }
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
+		return;
+	}
 
-    $args = array(
-        'post_type'      => 'viaje',
-        'posts_per_page' => -1,
-        'post_status'    => 'any'
-    );
+	$meta_query = array();
 
-    if ( current_user_can( 'empresa' ) ) {
-        $empresa_id = get_current_user_id();
-        $args['meta_query'] = array(
-            array(
-                'key'     => '_qv_empresa',
-                'value'   => $empresa_id,
-                'compare' => '='
-            )
-        );
-    }
+    // Aplicar filtros activos desde la URL (GET)
+	if ( ! empty( $_GET['filtro_empresa'] ) ) {
+		$meta_query[] = array(
+			'key'     => '_qv_empresa',
+			'value'   => intval( $_GET['filtro_empresa'] ),
+			'compare' => '='
+		);
+	}
 
-    $viajes = get_posts( $args );
+	if ( ! empty( $_GET['filtro_estado'] ) ) {
+		$meta_query[] = array(
+			'key'     => '_qv_estado',
+			'value'   => sanitize_text_field( $_GET['filtro_estado'] ),
+			'compare' => '='
+		);
+	}
 
-    header( 'Content-Type: text/csv; charset=utf-8' );
-    header( 'Content-Disposition: attachment; filename="viajes.csv"' );
+	if ( ! empty( $_GET['filtro_pago'] ) ) {
+		$meta_query[] = array(
+			'key'     => '_qv_pago',
+			'value'   => sanitize_text_field( $_GET['filtro_pago'] ),
+			'compare' => '='
+		);
+	}
 
-    $output = fopen( 'php://output', 'w' );
+    // Base de la query
+	$args = array(
+		'post_type'      => 'viaje',
+		'posts_per_page' => -1,
+		'post_status'    => 'any'
+	);
 
-    fputcsv( $output, array( 'ID', 'Título', 'Estado', 'Empresa', 'Fecha Programada', 'Importe Total', 'Forma de Pago' ) );
+	if ( ! empty( $meta_query ) ) {
+		$args['meta_query'] = $meta_query;
+	}
 
-    foreach ( $viajes as $viaje ) {
-        $viaje_id       = $viaje->ID;
-        $titulo         = html_entity_decode( wp_strip_all_tags( $viaje->post_title ) );
-        $estado         = get_post_meta( $viaje_id, '_qv_estado', true );
-        $empresa_id     = get_post_meta( $viaje_id, '_qv_empresa', true );
-        $fecha          = get_post_meta( $viaje_id, '_qv_fecha', true );
-        $hora           = get_post_meta( $viaje_id, '_qv_hora', true );
-        $forma_pago     = get_post_meta( $viaje_id, '_qv_pago', true );
+    // Si es empresa, forzar filtro por su ID
+	if ( current_user_can( 'empresa' ) ) {
+		$empresa_id = get_current_user_id();
+		$args['meta_query'][] = array(
+			'key'     => '_qv_empresa',
+			'value'   => $empresa_id,
+			'compare' => '='
+		);
+	}
+
+	$viajes = get_posts( $args );
+
+
+	header( 'Content-Type: text/csv; charset=utf-8' );
+	$nombre_sitio = sanitize_title( get_bloginfo('name') );
+	$fecha_actual = date_i18n( 'Y-m-d_H-i-s' );
+	$filename = "{$nombre_sitio}-viajes-{$fecha_actual}.csv";
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+
+	$output = fopen( 'php://output', 'w' );
+
+	fputcsv( $output, array( 'ID', 'Título', 'Estado', 'Empresa', 'Fecha Programada', 'Importe Total', 'Forma de Pago' ) );
+
+	foreach ( $viajes as $viaje ) {
+		$viaje_id       = $viaje->ID;
+		$titulo         = html_entity_decode( wp_strip_all_tags( $viaje->post_title ) );
+		$estado         = get_post_meta( $viaje_id, '_qv_estado', true );
+		$empresa_id     = get_post_meta( $viaje_id, '_qv_empresa', true );
+		$fecha          = get_post_meta( $viaje_id, '_qv_fecha', true );
+		$hora           = get_post_meta( $viaje_id, '_qv_hora', true );
+		$forma_pago     = get_post_meta( $viaje_id, '_qv_pago', true );
 
         // Buscar importe en cualquiera de los dos posibles campos
-        $importe = get_post_meta( $viaje_id, '_qv_total_general', true );
-        if ( $importe === '' ) {
-            $importe = get_post_meta( $viaje_id, '_qv_importe_total', true );
-        }
+		$importe = get_post_meta( $viaje_id, '_qv_total_general', true );
+		if ( $importe === '' ) {
+			$importe = get_post_meta( $viaje_id, '_qv_importe_total', true );
+		}
 
         // Formatear importe si existe
-        if ( $importe !== '' && is_numeric( $importe ) ) {
-            $importe = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
-        } else {
-            $importe = '-';
-        }
+		if ( $importe !== '' && is_numeric( $importe ) ) {
+			$importe = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
+		} else {
+			$importe = '-';
+		}
 
         // Formatear fecha y hora
-        $fecha_programada = $fecha;
-        if ( ! empty( $hora ) ) {
-            $fecha_programada .= ' ' . $hora;
-        }
+		$fecha_programada = $fecha;
+		if ( ! empty( $hora ) ) {
+			$fecha_programada .= ' ' . $hora;
+		}
 
         // Obtener nombre de empresa
-        $empresa_user = $empresa_id ? get_user_by( 'id', $empresa_id ) : null;
-        $empresa_nombre = $empresa_user ? $empresa_user->display_name : '-';
+		$empresa_user = $empresa_id ? get_user_by( 'id', $empresa_id ) : null;
+		$empresa_nombre = $empresa_user ? $empresa_user->display_name : '-';
 
-        fputcsv( $output, array(
-            $viaje_id,
-            $titulo,
-            $estado,
-            $empresa_nombre,
-            $fecha_programada,
-            $importe,
-            $forma_pago
-        ), ',', '"' );
-    }
+		fputcsv( $output, array(
+			$viaje_id,
+			$titulo,
+			$estado,
+			$empresa_nombre,
+			$fecha_programada,
+			$importe,
+			$forma_pago
+		), ',', '"' );
+	}
 
-    fclose( $output );
-    exit;
+	fclose( $output );
+	exit;
 }
 
 // Botón para descargar CSV
+// Botón para descargar CSV con los filtros activos
 function remiseria_add_csv_download_button() {
-    global $typenow;
-    if ( $typenow === 'viaje' ) {
-        echo '<div class="alignleft actions">';
-        echo '<a href="' . esc_url( admin_url( 'admin-ajax.php?action=remiseria_download_csv' ) ) . '" class="button button-primary">Descargar CSV</a>';
-        echo '</div>';
-    }
+	global $typenow;
+
+	if ( $typenow === 'viaje' ) {
+        // Mantener los filtros actuales de la URL
+		$query_args = array(
+			'action' => 'remiseria_download_csv'
+		);
+
+		if ( ! empty( $_GET['filtro_empresa'] ) ) {
+			$query_args['filtro_empresa'] = intval( $_GET['filtro_empresa'] );
+		}
+
+		if ( ! empty( $_GET['filtro_estado'] ) ) {
+			$query_args['filtro_estado'] = sanitize_text_field( $_GET['filtro_estado'] );
+		}
+
+		if ( ! empty( $_GET['filtro_pago'] ) ) {
+			$query_args['filtro_pago'] = sanitize_text_field( $_GET['filtro_pago'] );
+		}
+
+		$download_url = add_query_arg( $query_args, admin_url( 'admin-ajax.php' ) );
+
+		echo '<div class="alignleft actions">';
+		echo '<a href="' . esc_url( $download_url ) . '" class="button button-primary">Descargar CSV</a>';
+		echo '</div>';
+	}
 }
+
 add_action( 'restrict_manage_posts', 'remiseria_add_csv_download_button' );
 
 // Acción AJAX
