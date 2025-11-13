@@ -81,10 +81,10 @@ add_action( 'plugins_loaded', 'qv_init_plugin' );
 
 
 /* Limpieza Wordpress opcional */
-// Quitar menús de WordPress innecesarios
 add_action( 'admin_menu', function() {
-    remove_menu_page( 'edit.php' );          // Entradas
-    remove_menu_page( 'edit-comments.php' ); // Comentarios
+	remove_menu_page( 'edit.php' );
+	remove_menu_page( 'edit-comments.php' );
+	remove_menu_page( 'tools.php' );
 });
 add_action( 'admin_head', function() {
     // Ocultar secciones del perfil con CSS

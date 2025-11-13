@@ -7,6 +7,7 @@ class QV_Tablas {
 		add_filter( 'manage_edit-viaje_columns', [ $this, 'agregar_columnas' ] );
 		add_action( 'manage_viaje_posts_custom_column', [ $this, 'mostrar_columnas' ], 10, 2 );
 		add_filter( 'manage_edit-viaje_sortable_columns', [ $this, 'columnas_ordenables' ] );
+		add_action( 'pre_get_posts', [ $this, 'filtrar_viajes_por_empresa' ] );
 
 		// Filtros personalizados
 		add_action( 'restrict_manage_posts', [ $this, 'agregar_filtros' ] );
@@ -211,13 +212,36 @@ class QV_Tablas {
 			$query->set( 'meta_query', $meta_query );
 		}
 	}
+
+	/**
+	 * Filtrar viajes por empresa en el admin
+	 */
+	public function filtrar_viajes_por_empresa( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) return;
+
+		global $pagenow;
+		if ( $pagenow !== 'edit.php' ) return;
+		if ( $query->get( 'post_type' ) !== 'viaje' ) return;
+
+		/* Si el usuario es una empresa, mostrar solo sus viajes */
+		if ( current_user_can( 'empresa' ) ) {
+			$empresa_id = get_current_user_id();
+			$meta_query = [
+				[
+					'key'     => '_qv_empresa',
+					'value'   => $empresa_id,
+					'compare' => '=',
+				],
+			];
+			$query->set( 'meta_query', $meta_query );
+		}
+	}
+
 }
 
 new QV_Tablas();
 
 //// EXPORTAR VIAJES ////
-
-// Función para generar el archivo CSV y forzar su descarga
 // Función para generar el archivo CSV y forzar su descarga
 function remiseria_download_viajes_csv() {
 	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
@@ -334,7 +358,6 @@ function remiseria_download_viajes_csv() {
 }
 
 // Botón para descargar CSV
-// Botón para descargar CSV con los filtros activos
 function remiseria_add_csv_download_button() {
 	global $typenow;
 
