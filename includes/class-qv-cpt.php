@@ -41,3 +41,9 @@ class QV_CPT {
 	}
 }
 
+/* Ocultar menu empresas a los usuarios que no sean admin */
+add_action('admin_menu', function() {
+	if ( ! current_user_can('manage_options') ) {
+		remove_menu_page('edit.php?post_type=empresa');
+	}
+}, 999);
