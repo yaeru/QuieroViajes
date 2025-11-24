@@ -585,27 +585,52 @@ class QV_Admin {
 		}
 	}
 }
+
 add_action('save_post', function( $post_id ) {
-	// Evitar autosaves, revisiones, etc.
-	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
-	if ( get_post_type($post_id) !== 'viaje' ) return;
 
-	// Obtener la distancia guardada en metadatos
-	$distancia = get_post_meta($post_id, '_qv_distancia', true);
-	$distancia = floatval(str_replace(',', '.', (string)$distancia));
+    /* Evitar autosaves */
+    if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
+    if ( get_post_type($post_id) !== 'viaje' ) return;
 
-	// Obtener el adicional configurado en ajustes
-	$adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
+    /* ---------------------------------------------------------
+       1) GUARDAR CAMPOS DEL METABOX
+       --------------------------------------------------------- */
 
-	// Inicializar
-	$adicional_aplicado = 0.0;
+    /* Empresa */
+    if (isset($_POST['qv_empresa'])) {
+        update_post_meta($post_id, '_qv_empresa', intval($_POST['qv_empresa']));
+    }
 
-	// ✅ Aplicar el adicional si la distancia es menor o igual a 10 km
-	if ($distancia > 0 && $distancia <= 10 && $adicional_viaje_corto > 0) {
-		$adicional_aplicado = $adicional_viaje_corto;
-	}
+    /* Pasajero */
+    if (isset($_POST['qv_pasajero'])) {
+        update_post_meta($post_id, '_qv_pasajero', intval($_POST['qv_pasajero']));
+    }
 
-	// Guardar el resultado como metadato
-	update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
+    /* Más campos si los tuvieras:
+       if (isset($_POST['otro'])) update_post_meta(...)
+    */
+
+    /* ---------------------------------------------------------
+       2) PROCESAR DISTANCIA + ADICIONAL
+       --------------------------------------------------------- */
+
+    /* Obtener distancia guardada */
+    $distancia = get_post_meta($post_id, '_qv_distancia', true);
+    $distancia = floatval(str_replace(',', '.', (string)$distancia));
+
+    /* Obtener adicional configurado */
+    $adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
+
+    /* Inicializar */
+    $adicional_aplicado = 0.0;
+
+    /* Aplicar adicional si corresponde */
+    if ($distancia > 0 && $distancia <= 10 && $adicional_viaje_corto > 0) {
+        $adicional_aplicado = $adicional_viaje_corto;
+    }
+
+    /* Guardar resultado */
+    update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
+
 }, 20, 1);
 

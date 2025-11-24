@@ -58,47 +58,47 @@ function calcularResumen() {
 
     const service = new google.maps.DistanceMatrixService();
     service.getDistanceMatrix(
-        {
-            origins: [origen],
-            destinations: [destino],
-            travelMode: google.maps.TravelMode.DRIVING,
-            unitSystem: google.maps.UnitSystem.METRIC
-        },
-        function (response, status) {
-            if (status === "OK") {
-                const element = response.rows[0].elements[0];
-                if (!element || element.status !== "OK") {
-                    console.error("No se pudo calcular la distancia:", element && element.status);
-                    return;
-                }
+    {
+        origins: [origen],
+        destinations: [destino],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC
+    },
+    function (response, status) {
+        if (status === "OK") {
+            const element = response.rows[0].elements[0];
+            if (!element || element.status !== "OK") {
+                console.error("No se pudo calcular la distancia:", element && element.status);
+                return;
+            }
 
-                const distanciaTexto = element.distance.text;
-                const distanciaKm = element.distance.value / 1000;
+            const distanciaTexto = element.distance.text;
+            const distanciaKm = element.distance.value / 1000;
 
                 /* -------------------------
                    Adicional por viaje corto
                    ------------------------- */
-                let adicionalRaw = 0;
-                const adicionalHidden = document.getElementById("_qv_adicional_aplicado");
-                if (adicionalHidden && adicionalHidden.value !== "") {
-                    adicionalRaw = adicionalHidden.value;
-                } else {
-                    const adicionalSpan = document.getElementById("qv-adicional-valor");
-                    if (adicionalSpan) adicionalRaw = adicionalSpan.textContent;
-                }
-                adicionalRaw = String(adicionalRaw).replace(/\./g, '').replace(',', '.').replace(/[^\d\.\-]/g,'');
-                let adicionalNum = parseFloat(adicionalRaw);
-                if (isNaN(adicionalNum)) adicionalNum = 0;
+            let adicionalRaw = 0;
+            const adicionalHidden = document.getElementById("_qv_adicional_aplicado");
+            if (adicionalHidden && adicionalHidden.value !== "") {
+                adicionalRaw = adicionalHidden.value;
+            } else {
+                const adicionalSpan = document.getElementById("qv-adicional-valor");
+                if (adicionalSpan) adicionalRaw = adicionalSpan.textContent;
+            }
+            adicionalRaw = String(adicionalRaw).replace(/\./g, '').replace(',', '.').replace(/[^\d\.\-]/g,'');
+            let adicionalNum = parseFloat(adicionalRaw);
+            if (isNaN(adicionalNum)) adicionalNum = 0;
 
                 /* -------------------------
                    Gastos extra
                    ------------------------- */
-                let gastosExtras = 0;
-                document.querySelectorAll('#qvGastosExtraTable input[name*="[importe]"]').forEach(input => {
-                    const valor = parseFloat(String(input.value).replace(',', '.'));
-                    if (!isNaN(valor)) gastosExtras += valor;
-                });
-                gastosExtras = Math.ceil(gastosExtras);
+            let gastosExtras = 0;
+            document.querySelectorAll('#qvGastosExtraTable input[name*="[importe]"]').forEach(input => {
+                const valor = parseFloat(String(input.value).replace(',', '.'));
+                if (!isNaN(valor)) gastosExtras += valor;
+            });
+            gastosExtras = Math.ceil(gastosExtras);
 
                 /* -------------------------
                    Cálculos (redondeo hacia arriba)
@@ -153,7 +153,7 @@ function calcularResumen() {
                 console.error("Error en DistanceMatrix:", status);
             }
         }
-    );
+        );
 }
 
 // Escuchar cambios para recalcular siempre
