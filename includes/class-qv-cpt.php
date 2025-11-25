@@ -5,7 +5,7 @@ class QV_CPT {
 
 	public function register() {
 		add_action( 'init', [ $this, 'register_viajes' ] );
-		add_action( 'init', [ $this, 'register_empresas' ] );
+		//add_action( 'init', [ $this, 'register_empresas' ] );
 	}
 
 	public function register_viajes() {
