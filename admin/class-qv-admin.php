@@ -588,49 +588,71 @@ class QV_Admin {
 
 add_action('save_post', function( $post_id ) {
 
-    /* Evitar autosaves */
-    if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
-    if ( get_post_type($post_id) !== 'viaje' ) return;
+	/* Evitar autosaves */
+	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
+	if ( get_post_type($post_id) !== 'viaje' ) return;
 
-    /* ---------------------------------------------------------
-       1) GUARDAR CAMPOS DEL METABOX
-       --------------------------------------------------------- */
+	/* 1) GUARDAR CAMPOS DEL METABOX */
 
-    /* Empresa */
-    if (isset($_POST['qv_empresa'])) {
-        update_post_meta($post_id, '_qv_empresa', intval($_POST['qv_empresa']));
-    }
+	/* Empresa */
+	if (isset($_POST['qv_empresa'])) {
+		update_post_meta($post_id, '_qv_empresa', intval($_POST['qv_empresa']));
+	}
 
-    /* Pasajero */
-    if (isset($_POST['qv_pasajero'])) {
-        update_post_meta($post_id, '_qv_pasajero', intval($_POST['qv_pasajero']));
-    }
+	/* Pasajero */
+	if (isset($_POST['qv_pasajero'])) {
+		update_post_meta($post_id, '_qv_pasajero', intval($_POST['qv_pasajero']));
+	}
 
-    /* Más campos si los tuvieras:
-       if (isset($_POST['otro'])) update_post_meta(...)
-    */
+	/* Conductor */
+	if (isset($_POST['qv_conductor'])) {
+		update_post_meta($post_id, '_qv_conductor', intval($_POST['qv_conductor']));
+	}
 
-    /* ---------------------------------------------------------
-       2) PROCESAR DISTANCIA + ADICIONAL
-       --------------------------------------------------------- */
+	/* Estado */
+	if (isset($_POST['qv_estado'])) {
+		update_post_meta($post_id, '_qv_estado', sanitize_text_field($_POST['qv_estado']));
+	}
 
-    /* Obtener distancia guardada */
-    $distancia = get_post_meta($post_id, '_qv_distancia', true);
-    $distancia = floatval(str_replace(',', '.', (string)$distancia));
+	/* Fecha */
+	if (isset($_POST['qv_fecha'])) {
+		update_post_meta($post_id, '_qv_fecha', sanitize_text_field($_POST['qv_fecha']));
+	}
 
-    /* Obtener adicional configurado */
-    $adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
+	/* Hora */
+	if (isset($_POST['qv_hora'])) {
+		update_post_meta($post_id, '_qv_hora', sanitize_text_field($_POST['qv_hora']));
+	}
 
-    /* Inicializar */
-    $adicional_aplicado = 0.0;
+	/* Origen */
+	if (isset($_POST['qv_origen'])) {
+		update_post_meta($post_id, '_qv_origen', sanitize_text_field($_POST['qv_origen']));
+	}
 
-    /* Aplicar adicional si corresponde */
-    if ($distancia > 0 && $distancia <= 10 && $adicional_viaje_corto > 0) {
-        $adicional_aplicado = $adicional_viaje_corto;
-    }
+	/* Destino */
+	if (isset($_POST['qv_destino'])) {
+		update_post_meta($post_id, '_qv_destino', sanitize_text_field($_POST['qv_destino']));
+	}
 
-    /* Guardar resultado */
-    update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
+	/* 2) PROCESAR DISTANCIA + ADICIONAL  */
+
+	/* Obtener distancia guardada */
+	$distancia = get_post_meta($post_id, '_qv_distancia', true);
+	$distancia = floatval(str_replace(',', '.', (string)$distancia));
+
+	/* Obtener adicional configurado */
+	$adicional_viaje_corto = floatval(get_option('qv_adicional_viaje_corto', 0));
+
+	/* Inicializar */
+	$adicional_aplicado = 0.0;
+
+	/* Aplicar adicional si corresponde */
+	if ($distancia > 0 && $distancia <= 10 && $adicional_viaje_corto > 0) {
+		$adicional_aplicado = $adicional_viaje_corto;
+	}
+
+	/* Guardar resultado */
+	update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
 
 }, 20, 1);
 

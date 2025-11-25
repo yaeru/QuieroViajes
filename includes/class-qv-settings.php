@@ -39,6 +39,13 @@ class QV_Settings_Page {
 			'sanitize_callback' => 'floatval',
 			'default'           => 0,
 		] );
+
+		register_setting( 'qv_settings_group', 'qv_debug_mails', [
+			'type'              => 'boolean',
+			'sanitize_callback' => function($v){ return $v ? 1 : 0; },
+			'default'           => 0,
+		] );
+
 	}
 
 	/* Renderizar la página de ajustes */
@@ -78,6 +85,24 @@ class QV_Settings_Page {
 							<p class="description">Importe costo_fijo aplicado a viajes cortos (en pesos).</p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="qv_debug_mails">Modo Debug de Emails</label></th>
+						<td>
+							<label>
+								<input type="checkbox"
+								name="qv_debug_mails"
+								id="qv_debug_mails"
+								value="1"
+								<?php checked(1, get_option('qv_debug_mails', 0)); ?> />
+
+								No enviar emails (solo registrar en debug.log)
+							</label>
+							<p class="description">
+								Si está activado, ningún correo se enviará realmente. Todos los envíos quedarán registrados en debug.log.
+							</p>
+						</td>
+					</tr>
+
 				</table>
 
 				<?php submit_button( 'Guardar ajustes' ); ?>
@@ -85,4 +110,6 @@ class QV_Settings_Page {
 		</div>
 		<?php
 	}
+
+
 }

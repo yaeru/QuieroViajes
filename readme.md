@@ -23,6 +23,7 @@ API Key en wp-config.php, ejemplo define( 'QV_GOOGLE_MAPS_API_KEY', 'YOURAPIKEYH
 - Historial viaje para chofer
 - Añadir importe al pasajero, Nota estimado
 - Sin empresa asignada bug
+- Un solo template con condicionales
 
 MAS ADELANTE
 10-Ver  la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en
