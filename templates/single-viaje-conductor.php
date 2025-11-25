@@ -63,14 +63,28 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 						<span class="qv-resaltado"><?php echo esc_html($destino); ?></span>
 					</p>
 				</div>
-				<!-- <div class="qv-chip">
-					<p class="qv-chip-icon qv-chip-importe">
-						Importe *<br>
-						<span class="qv-resaltado"><?php echo $total_general ? '$ ' . esc_html(number_format($total_general, 2)) : '$ -'; ?></span><br>
-						<small>* El final puede contener otros recargos.</small>
-					</p>
-				</div> -->
 			</article>
+
+			<?php
+			$current_user = wp_get_current_user();
+			$es_conductor = in_array('conductor', (array) $current_user->roles, true);
+
+			if ( ! $es_conductor ) :
+				?>
+				<article id="qv-chip-importe">
+					<div class="qv-chip">
+						<p class="qv-chip-icon qv-chip-importe">
+							Importe *<br>
+							<span class="qv-resaltado">
+								<?php echo $total_general ? '$ ' . esc_html(number_format($total_general, 2)) : '$ -'; ?>
+							</span><br>
+							<small>* El final puede contener otros recargos.</small>
+						</p>
+					</div>
+				</article>
+				<?php
+			endif;
+			?>
 
 			<hr>
 			<article id="qvChipConductor" class="qv-chip-viaje qv-chip-viaje-perfil">
