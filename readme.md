@@ -18,9 +18,11 @@ API Key en wp-config.php, ejemplo define( 'QV_GOOGLE_MAPS_API_KEY', 'YOURAPIKEYH
 ## Listado de tareas
 
 ### Pendiente
-historial viajes para chofer
-Añadir importe al pasajero, Nota estimado
-luego le llega un mail al pasajero con los datos del viaje, y el importe final?
+
+- Foto perfiles
+- Historial viaje para chofer
+- Añadir importe al pasajero, Nota estimado
+- Sin empresa asignada bug
 
 MAS ADELANTE
 10-Ver  la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en
@@ -46,3 +48,13 @@ Borrar campo Auto
 
 tabla de viajes
 exportar csv
+
+### emails
+Corven Sacif
+corven@corven.com.ar
+
+Grupo Disal S.A.
+grupodisal@grupodisal.com.ar
+
+Hernan Chofer
+empresaaltonivel@gmail.com

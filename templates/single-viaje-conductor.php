@@ -27,15 +27,14 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 ?>
-
-<pre >
+<!-- <pre>
 	<?php
 	$metas = get_post_meta( $post->ID );
 	foreach ( $metas as $key => $value ) {
 		echo esc_html($key) . ': ' . esc_html(is_array($value) ? implode(', ', $value) : $value) . "\n";
 	}
 	?>
-</pre>
+</pre> -->
 
 <div id="qvViajeDetalles" class="qv-grid">
 	<aside class="col">
@@ -50,34 +49,11 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 				<p class="qv-chip-icon qv-chip-date">
 					Fecha<br>
 					<span>
-
-						
 					</span>
 					<span class="qv-resaltado"><?php echo esc_html($fecha_formateada = date_i18n( 'd M Y', strtotime( $fecha ) )); ?></span> a las <span class="qv-resaltado"><?php echo esc_html($hora); ?> hs</span>
 				</p>
 			</article>
 			<article id="qv-chip-info">
-				<!-- <div class="qv-chip">
-					<p class="qv-chip-icon qv-chip-distancia">
-						Distancia<br>
-						<span class="qv-resaltado"><?php echo $distancia ? esc_html($distancia . ' km') : 'No disponible'; ?></span>
-					</p>
-					<p class="qv-chip-icon qv-chip-importe">Importe x km<br>
-						<span class="qv-resaltado">$ <?php echo esc_html($importe_km); ?></span>
-					</p>
-					<p class="qv-chip-icon qv-chip-importe">
-						Importe<br>
-						<span class="qv-resaltado"><?php echo $importe_total ? '$ ' . esc_html(number_format($importe_total, 2)) : '$ -'; ?></span>
-					</p>
-					<p class="qv-chip-icon qv-chip-importe">
-						Importe total<br>
-						<span class="qv-resaltado"><?php echo $total_general ? '$ ' . esc_html(number_format($total_general, 2)) : '$ -'; ?></span>
-					</p>
-					<p class="qv-chip-icon qv-chip-distancia">
-						Origen lat<br>
-						<span class="qv-resaltado"><?php echo $origen_lat ? esc_html($origen_lat . ' km') : 'No disponible'; ?></span>
-					</p>
-				</div> -->
 				<div class="qv-chip">
 					<p class="qv-chip-icon qv-chip-origen">Origen <br>
 						<span class="qv-resaltado"><?php echo esc_html($origen); ?></span>
@@ -87,6 +63,13 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 						<span class="qv-resaltado"><?php echo esc_html($destino); ?></span>
 					</p>
 				</div>
+				<!-- <div class="qv-chip">
+					<p class="qv-chip-icon qv-chip-importe">
+						Importe *<br>
+						<span class="qv-resaltado"><?php echo $total_general ? '$ ' . esc_html(number_format($total_general, 2)) : '$ -'; ?></span><br>
+						<small>* El final puede contener otros recargos.</small>
+					</p>
+				</div> -->
 			</article>
 
 			<hr>
@@ -145,9 +128,15 @@ $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 					$empresa_id_usuario = (int) get_user_meta($pasajero->ID, 'empresa_id', true);
 					$empresa_nombre = 'Sin empresa asignada';
 
-					if ($empresa_id_usuario && get_post_type($empresa_id_usuario) === 'empresa') {
-						$empresa_nombre = get_the_title($empresa_id_usuario);
+					if ($empresa_id_usuario > 0) {
+						$empresa_usuario = get_userdata($empresa_id_usuario);
+
+						/* Confirmar que es un usuario con rol empresa */
+						if ($empresa_usuario && in_array('empresa', (array) $empresa_usuario->roles, true)) {
+							$empresa_nombre = $empresa_usuario->display_name;
+						}
 					}
+
 
 					$avatar_url = get_avatar_url($pasajero->ID, ['size' => 100]);
 					?>

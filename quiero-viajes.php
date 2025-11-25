@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.5
+ * Version: 0.1.7
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2
@@ -19,6 +19,11 @@ define( 'QV_API', "PEPE" );
 require_once QV_PATH . 'includes/class-qv-cpt.php';
 require_once QV_PATH . 'admin/class-qv-admin.php';
 require_once QV_PATH . 'admin/class-qv-frontend.php';
+
+// Dentro de quiero-viajes.php
+require_once QV_PATH . 'includes/class-qv-emails.php';
+require_once QV_PATH . 'includes/class-qv-email-templates.php';
+
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-tablas.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-qv-conductores.php';
@@ -76,6 +81,8 @@ function qv_init_plugin() {
     // En frontend y backend (para interceptar plantillas)
 	$qv_templates = new QV_Templates();
 	$qv_templates->init();
+
+	$qv_emails = new QV_Emails();
 }
 add_action( 'plugins_loaded', 'qv_init_plugin' );
 
@@ -84,7 +91,7 @@ add_action( 'plugins_loaded', 'qv_init_plugin' );
 add_action( 'admin_menu', function() {
 	remove_menu_page( 'edit.php' );
 	remove_menu_page( 'edit-comments.php' );
-	remove_menu_page( 'tools.php' );
+	//remove_menu_page( 'tools.php' );
 });
 add_action( 'admin_head', function() {
     // Ocultar secciones del perfil con CSS
