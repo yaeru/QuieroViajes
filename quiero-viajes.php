@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.9
+ * Version: 0.1.91
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2

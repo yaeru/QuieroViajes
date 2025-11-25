@@ -33,8 +33,9 @@ class QV_Conductores {
 		if ( ! is_user_logged_in() ) return;
 
 		$user = wp_get_current_user();
-		if ( in_array( 'conductor', (array) $user->roles ) || current_user_can( 'manage_options' ) ) {
+		//if ( in_array( 'conductor', (array) $user->roles ) || current_user_can( 'manage_options' ) ) {
 		/* [YD]esto sirve para mostrar solo el menu al rol Conductor, oculto por el plugin de simular perfil if ( in_array( 'conductor', (array) $user->roles, true ) ) { */
+		if ( in_array( 'conductor', (array) $user->roles, true ) ) { 
 			/* Usamos capability 'read' para que cualquier conductor pueda entrar pero no editar */
 			add_menu_page(
 				'Mis viajes',
@@ -94,7 +95,7 @@ class QV_Conductores {
 							<th>Estado</th>
 							<th>Fecha programada</th>
 							<th>Empresa</th>
-							<th>Importe total</th>
+							<!-- <th>Importe total</th> -->
 							<th>Forma de pago</th>
 						</tr>
 					</thead>
@@ -107,8 +108,8 @@ class QV_Conductores {
 							$fecha = get_post_meta( $id, '_qv_fecha', true );
 							$hora  = get_post_meta( $id, '_qv_hora', true );
 							$empresa_id = get_post_meta( $id, '_qv_empresa', true );
-							$importe = get_post_meta( $id, '_qv_total_general', true );
-							if ( $importe === '' ) $importe = get_post_meta( $id, '_qv_importe_total', true );
+							//$importe = get_post_meta( $id, '_qv_total_general', true );
+							//if ( $importe === '' ) $importe = get_post_meta( $id, '_qv_importe_total', true );
 							$forma_pago = get_post_meta( $id, '_qv_pago', true );
 
 							/* Formateos */
@@ -119,10 +120,10 @@ class QV_Conductores {
 								$user_empresa = get_user_by( 'id', intval( $empresa_id ) );
 								if ( $user_empresa ) $empresa_nombre = esc_html( $user_empresa->display_name );
 							}
-							$importe_display = '-';
-							if ( $importe !== '' && is_numeric( $importe ) ) {
-								$importe_display = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
-							}
+							// $importe_display = '-';
+							// if ( $importe !== '' && is_numeric( $importe ) ) {
+							// 	$importe_display = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
+							// }
 							?>
 							<tr>
 								<td><?php echo (int) $id; ?></td>
@@ -130,7 +131,7 @@ class QV_Conductores {
 								<td><?php echo $estado ? esc_html( ucfirst( $estado ) ) : '-'; ?></td>
 								<td><?php echo esc_html( $fecha_programada ); ?></td>
 								<td><?php echo $empresa_nombre; ?></td>
-								<td><?php echo $importe_display; ?></td>
+								<!-- <td><?php echo $importe_display; ?></td> -->
 								<td><?php echo $forma_pago ? esc_html( ucfirst( $forma_pago ) ) : '-'; ?></td>
 							</tr>
 						<?php endforeach; ?>
