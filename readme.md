@@ -13,16 +13,12 @@ Paso 1, crear API en google cloud con las siguientes bibliotecas
 
 Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 
-## Pendiente
+## Roadmap
 
 ### Etapa 1
-- Pagina visible solo para logueados
-- Foto perfiles
-- Historial viaje para chofer
-- Añadir importe al pasajero, Nota estimado
-- Sin empresa asignada bug
-- Un solo template con condicionales
 - Mis viajes solo para rol conductor
+- Chequear que solo los usuarios puedan ver sus propios viajes
+- Pasajero Login redirija al listado de viajes
 
 ### Etapa 2
 - Logo en el Iniciar sesion
@@ -33,6 +29,13 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 
 	
 ## Changelog
+- Pagina visible solo para logueados
+- Foto perfiles
+- Historial viaje para chofer
+- Añadir importe al pasajero, Nota estimado
+- Sin empresa asignada bug
+- Un solo template con condicionales
+
 - Instalar Google Maps en vez del actual,  ya que es un grupo muy reducido, el personal que va a utilizar el sistema. Estuve haciendo un recuento de los viajes, y entre las 3 empresas que me pedirían los traslados en esta página, no superan los 300 viajes mensuales
 - Faltaría que al pasajero le aparezca el icono de whatsapp con el numero del chofer para que pueda hablar con é. (donde esta, cuanto le falta)
 - Cuando pones "publicar," a veces carga los peajes en el resultado final, a veces lo carga, a
