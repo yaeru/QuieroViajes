@@ -34,6 +34,7 @@ class QV_Conductores {
 
 		$user = wp_get_current_user();
 		if ( in_array( 'conductor', (array) $user->roles ) || current_user_can( 'manage_options' ) ) {
+		/* [YD]esto sirve para mostrar solo el menu al rol Conductor, oculto por el plugin de simular perfil if ( in_array( 'conductor', (array) $user->roles, true ) ) { */
 			/* Usamos capability 'read' para que cualquier conductor pueda entrar pero no editar */
 			add_menu_page(
 				'Mis viajes',

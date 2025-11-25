@@ -27,8 +27,11 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 // Tipo de rol
-
-$es_conductor = in_array('conductor', (array) $current_user->roles, true);
+$user = wp_get_current_user();
+$es_pasajero = in_array('pasajero', (array) $user->roles, true);
+$es_conductor = in_array('conductor', (array) $user->roles, true);
+$es_empresa   = in_array('empresa', (array) $user->roles, true);
+$es_admin     = current_user_can('manage_options');
 ?>
 
 <?php if ( $current_user->user_login === 'admin' ) : ?>
@@ -45,9 +48,7 @@ $es_conductor = in_array('conductor', (array) $current_user->roles, true);
 <div id="qvViajeDetalles" class="qv-grid">
 	<aside class="col">
 		<div class="qv-card">
-			<?php
-			if ( ! $es_conductor ) :
-				?>
+			<?php if ( ! $es_conductor ) : ?>
 				<article id="qvChipConductor" class="qv-chip qv-chip-viaje-perfil">
 					<?php if ($conductor): ?>
 						<div class="qv-grid">
@@ -87,9 +88,9 @@ $es_conductor = in_array('conductor', (array) $current_user->roles, true);
 						<p><em>No hay conductor asignado aún.</em></p>
 					<?php endif; ?>
 				</article>
-				<?php
-			endif;
-			?>
+			<?php endif; ?>
+			
+			<?php if ( ! $es_pasajero ) : ?>
 			<article id="qvChipPasajero" class="qv-chip  qv-chip-viaje-perfil">
 				<?php
 				$pasajeros = get_users([
@@ -148,6 +149,7 @@ $es_conductor = in_array('conductor', (array) $current_user->roles, true);
 					<p><em>No hay pasajeros registrados para esta empresa.</em></p>
 				<?php endif; ?>
 			</article>
+			<?php endif; ?>
 
 			<article id="qvChipDate" class="qv-chip">
 				<p class="qv-chip-icon qv-chip-date">

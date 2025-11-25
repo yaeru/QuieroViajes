@@ -5,15 +5,15 @@
 	--qv-primary: #c14242;
 	--qv-dark: #333;
 	--qv-light: white;
-	--qv-muted: #f0f0f1;
+	--qv-muted: #e3e3e3;
 	--qv-radius: 10px;
 	--qv-breakpoints-md: 981px;
 }
 /* THEME */
 @media (min-width: 768px) {
-    .col-full {
-        max-width: 90em !important;
-    }
+	.col-full {
+		max-width: 90em !important;
+	}
 }
 
 /*helpers*/
@@ -68,9 +68,15 @@ p {
 		height: 100%;
 	}
 }
-
+.qv-chip {
+	p {
+		margin-bottom: 0;
+	}
+}
 .qv-chip+.qv-chip {
-	margin-top: 30px;
+	margin-top: 15px;
+	padding-top: 15px;
+	border-top: solid 1px var(--qv-muted);
 }
 .qv-chip-icon {
 	padding-left: 40px;
@@ -108,10 +114,25 @@ p {
 		object-fit: cover;
 	}
 }
-.qv-chip-viaje +.qv-chip-viaje {
-	margin-top: 20px;
-}
 .qv-chip-viaje-perfil {
+	text-align: right;
+	> div {
+		p {
+			margin-bottom: 0px;
+			line-height: 1.2em;
+		}
+		.qv-perfil-name {
+			margin-bottom: 0px;
+			font-weight: normal;
+			font-size: 1em;
+			text-transform: uppercase;
+		}
+		.qv-perfil-patente {
+			font-weight: bold;
+			font-size: 1.3em;
+		}
+		.qv-perfil-auto {}
+	}
 	.qv-grid {
 		grid-template-columns: 70px 1fr;
 		align-items: center;
@@ -142,7 +163,7 @@ p {
 .qv-card {
 	padding: var(--qv-padding-lg) var(--qv-padding-sm);
 	background-color: white;
-	border: solid 1px #ccc;
+	border: solid 1px var(--qv-muted);
 	border-radius: 10px;
 }
 @media (min-width: 981px) {
@@ -159,7 +180,7 @@ p {
 
 #qvChipConductor {
 	.qv-grid {
-		grid-template-columns: 135px 1fr;
+		/*grid-template-columns: 135px 1fr;*/
 		.qv-avatar {
 			display: flex;
 			img {
@@ -172,27 +193,19 @@ p {
 				z-index: 1;
 			}
 		}
-		> div {
-			text-align: right;
-			p {
-				margin-bottom: 0px;
-				line-height: 1.2em;
-			}
-			.qv-perfil-name {
-				margin-bottom: 0px;
-				font-weight: normal;
-				font-size: 1em;
-				text-transform: uppercase;
-			}
-			.qv-perfil-patente {
-				font-weight: bold;
-				font-size: 1.3em;
-			}
-			.qv-perfil-auto {}
-		}
 	}
 }
-#qvChipPasajero {}
+#qvChipPasajero {
+	.qv-perfil-name {
+		font-weight: bold;
+		font-size: 1.3em;
+	}
+}
+#qvChipViaje {
+	p+p {
+		margin-top: 10px;
+	}
+}
 #qvChipObservaciones {
 	p {
 		margin-bottom: 0;

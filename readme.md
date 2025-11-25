@@ -24,6 +24,7 @@ API Key en wp-config.php, ejemplo define( 'QV_GOOGLE_MAPS_API_KEY', 'YOURAPIKEYH
 - Añadir importe al pasajero, Nota estimado
 - Sin empresa asignada bug
 - Un solo template con condicionales
+- Mis viajes solo para rol conductor
 
 MAS ADELANTE
 10-Ver  la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en
