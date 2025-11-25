@@ -63,7 +63,9 @@ p {
 }
 
 #qvViajeDetalles {
-	grid-template-columns: 400px 1fr;
+	@media (min-width: 981px) {
+		grid-template-columns: 400px 1fr;
+	}
 	.qv-card {
 		height: 100%;
 	}

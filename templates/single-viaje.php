@@ -27,11 +27,11 @@ $conductor = $conductor_id ? get_user_by('id', $conductor_id) : null;
 $foto_auto_id = get_user_meta($conductor_id, 'foto_auto', true);
 
 // Tipo de rol
-$user = wp_get_current_user();
-$es_pasajero = in_array('pasajero', (array) $user->roles, true);
-$es_conductor = in_array('conductor', (array) $user->roles, true);
-$es_empresa   = in_array('empresa', (array) $user->roles, true);
-$es_admin     = current_user_can('manage_options');
+$user			= wp_get_current_user();
+$es_pasajero	= in_array('pasajero', (array) $user->roles, true);
+$es_conductor	= in_array('conductor', (array) $user->roles, true);
+$es_empresa		= in_array('empresa', (array) $user->roles, true);
+$es_admin		= current_user_can('manage_options');
 ?>
 
 <?php if ( $current_user->user_login === 'admin' ) : ?>
@@ -89,75 +89,74 @@ $es_admin     = current_user_can('manage_options');
 					<?php endif; ?>
 				</article>
 			<?php endif; ?>
-			
+
 			<?php if ( ! $es_pasajero ) : ?>
-			<article id="qvChipPasajero" class="qv-chip  qv-chip-viaje-perfil">
-				<?php
-				$pasajeros = get_users([
-					'role'       => 'pasajero',
-					'meta_key'   => 'empresa_id',
-					'meta_value' => $empresa_id,
-					'number'     => 1,
-				]);
+				<article id="qvChipPasajero" class="qv-chip  qv-chip-viaje-perfil">
+					<?php
+					$pasajeros = get_users([
+						'role'       => 'pasajero',
+						'meta_key'   => 'empresa_id',
+						'meta_value' => $empresa_id,
+						'number'     => 1,
+					]);
 
-				$pasajero = !empty($pasajeros) ? $pasajeros[0] : null;
+					$pasajero = !empty($pasajeros) ? $pasajeros[0] : null;
 
-				if ($pasajero):
-					$telefono = get_user_meta($pasajero->ID, 'telefono', true);
-					$empresa_id_usuario = (int) get_user_meta($pasajero->ID, 'empresa_id', true);
-					$empresa_nombre = 'Sin empresa asignada';
+					if ($pasajero):
+						$telefono = get_user_meta($pasajero->ID, 'telefono', true);
+						$empresa_id_usuario = (int) get_user_meta($pasajero->ID, 'empresa_id', true);
+						$empresa_nombre = 'Sin empresa asignada';
 
-					if ($empresa_id_usuario > 0) {
-						$empresa_usuario = get_userdata($empresa_id_usuario);
+						if ($empresa_id_usuario > 0) {
+							$empresa_usuario = get_userdata($empresa_id_usuario);
 
-						/* Confirmar que es un usuario con rol empresa */
-						if ($empresa_usuario && in_array('empresa', (array) $empresa_usuario->roles, true)) {
-							$empresa_nombre = $empresa_usuario->display_name;
+							/* Confirmar que es un usuario con rol empresa */
+							if ($empresa_usuario && in_array('empresa', (array) $empresa_usuario->roles, true)) {
+								$empresa_nombre = $empresa_usuario->display_name;
+							}
 						}
-					}
 
 
-					$avatar_url = get_avatar_url($pasajero->ID, ['size' => 100]);
-					?>
-					<div class="qv-grid">
-						<figure class="qv-avatar">
-							<img src="<?php echo esc_url($avatar_url); ?>" alt="<?php echo esc_attr($pasajero->display_name); ?>" width="100" height="100">
-						</figure>
-						<div>
-							<p class="qv-perfil-name">
-								<?php echo esc_html($pasajero->display_name); ?>
-							</p>
-							<ul class="qv-list">
-								<!-- <li><strong>Teléfono:</strong> <?php echo esc_html($telefono ?: 'No disponible'); ?></li> -->
-								<li>Empresa <strong><?php echo esc_html($empresa_nombre); ?></strong></li>
-							</ul>
+						$avatar_url = get_avatar_url($pasajero->ID, ['size' => 100]);
+						?>
+						<div class="qv-grid">
+							<figure class="qv-avatar">
+								<img src="<?php echo esc_url($avatar_url); ?>" alt="<?php echo esc_attr($pasajero->display_name); ?>" width="100" height="100">
+							</figure>
+							<div>
+								<p class="qv-perfil-name">
+									<?php echo esc_html($pasajero->display_name); ?>
+								</p>
+								<ul class="qv-list">
+									<!-- <li><strong>Teléfono:</strong> <?php echo esc_html($telefono ?: 'No disponible'); ?></li> -->
+									<li>Empresa <strong><?php echo esc_html($empresa_nombre); ?></strong></li>
+								</ul>
+							</div>
 						</div>
-					</div>
 
-					<?php if ($telefono): ?>
-						<div class="qv-perfil-action qv-grid qv-grid-phone">
-							<a href="tel:+549<?php echo esc_attr($telefono); ?>" class="qv-btn">
-								Llamar
-							</a>
-							<a href="https://wa.me/+549<?php echo esc_attr($telefono); ?>" class="qv-btn" target="_blank">
-								Whatsapp
-							</a>
-						</div>
+						<?php if ($telefono): ?>
+							<div class="qv-perfil-action qv-grid qv-grid-phone">
+								<a href="tel:+549<?php echo esc_attr($telefono); ?>" class="qv-btn">
+									Llamar
+								</a>
+								<a href="https://wa.me/+549<?php echo esc_attr($telefono); ?>" class="qv-btn" target="_blank">
+									Whatsapp
+								</a>
+							</div>
+						<?php endif; ?>
+
+					<?php else: ?>
+						<p><em>No hay pasajeros registrados para esta empresa.</em></p>
 					<?php endif; ?>
-
-				<?php else: ?>
-					<p><em>No hay pasajeros registrados para esta empresa.</em></p>
-				<?php endif; ?>
-			</article>
+				</article>
 			<?php endif; ?>
 
 			<article id="qvChipDate" class="qv-chip">
 				<p class="qv-chip-icon qv-chip-date">
-					Fecha<br>
-					<span>
-					</span>
-					<span class="qv-resaltado"><?php echo esc_html($fecha_formateada = date_i18n( 'd M Y', strtotime( $fecha ) )); ?></span> • <span class="qv-resaltado"><?php echo esc_html($hora); ?> hs</span><br>
-					<span class="qv-resaltado">#12256 | <?php echo esc_html( ucfirst( $estado ) ); ?></h3></span>
+					Info<br>
+					<span class="qv-resaltado"><?php echo esc_html($fecha_formateada = date_i18n( 'd M Y', strtotime( $fecha ) )); ?></span> •
+					<span class="qv-resaltado"><?php echo esc_html($hora); ?> hs</span><br>
+					<span class="qv-resaltado">#<?php echo (int) $post->ID; ?> | <?php echo esc_html( QV_Viajes_Utils::get_label_estado( $estado ) ); ?></span>
 				</p>
 			</article>
 			<article id="qvChipViaje" class="qv-chip">

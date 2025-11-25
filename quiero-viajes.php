@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.7
+ * Version: 0.1.9
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2
@@ -13,7 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'QV_PATH', plugin_dir_path( __FILE__ ) );
 define( 'QV_URL', plugin_dir_url( __FILE__ ) );
-define( 'QV_API', "PEPE" );
 
 // Cargar archivos principales
 require_once QV_PATH . 'includes/class-qv-cpt.php';
@@ -23,12 +22,39 @@ require_once QV_PATH . 'admin/class-qv-frontend.php';
 // Dentro de quiero-viajes.php
 require_once QV_PATH . 'includes/class-qv-emails.php';
 require_once QV_PATH . 'includes/class-qv-email-templates.php';
+require_once QV_PATH . 'includes/class-qv-viajes-utils.php';
+require_once QV_PATH . 'includes/class-qv-tablas.php';
+require_once QV_PATH . 'includes/class-qv-settings.php';
+require_once QV_PATH . 'includes/class-qv-conductores.php';
+require_once QV_PATH . 'includes/class-qv-usuarios.php';
+require_once QV_PATH . 'includes/class-qv-templates.php';
 
-require_once plugin_dir_path(__FILE__) . 'includes/class-qv-tablas.php';
-require_once plugin_dir_path(__FILE__) . 'includes/class-qv-settings.php';
-require_once plugin_dir_path(__FILE__) . 'includes/class-qv-conductores.php';
-require_once plugin_dir_path(__FILE__) . 'includes/class-qv-usuarios.php';
-require_once plugin_dir_path(__FILE__) . 'includes/class-qv-templates.php';
+
+/* SOLO USUARIOS VEN LA WEB */
+function restringir_acceso_solo_usuarios() {
+    if ( !is_user_logged_in() && !is_page('login') ) {
+        // Redirige a la página de inicio de sesión si no están logueados
+        wp_redirect( wp_login_url() );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'restringir_acceso_solo_usuarios' );
+
+// Cambiar logo en el login de WordPress
+add_action('login_enqueue_scripts', function() {
+    ?>
+    <style type="text/css">
+        /* Cambiar el logo */
+        #login h1 a {
+            background-image: url('https://remisesaltonivel.com.ar/wp-content/uploads/2024/12/Logo-Alto-Nivel-small.png');
+            background-size: contain;
+            width: 100%;
+            height: 80px; /* ajustar según tu logo */
+        }
+    </style>
+    <?php
+});
+
 
 // Cargar estilos del frontend del plugin
 function qv_enqueue_frontend_styles() {

@@ -4,20 +4,19 @@ Administrador de viajes empresariales con Google Maps para Wordpress.
 ## Instucciones
 
 ### API Key
-Activar API en google cloud con las siguientes bibliotecas
+Paso 1, crear API en google cloud con las siguientes bibliotecas
 - Places API
 - Places API (New)
 - Directions API
 - Distance Matrix API
 - Maps JavaScript API
 
-### Cargar API en Wordpress
-API Key en menu Admin de Wordpress Viajes > Ajustes
+Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 
 ## Pendiente
 
 ### Etapa 1
-
+- Pagina visible solo para logueados
 - Foto perfiles
 - Historial viaje para chofer
 - Añadir importe al pasajero, Nota estimado
@@ -26,7 +25,11 @@ API Key en menu Admin de Wordpress Viajes > Ajustes
 - Mis viajes solo para rol conductor
 
 ### Etapa 2
+- Logo en el Iniciar sesion
+- Colores personalisados
+- Codigo de seguridad
 - Ver la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en una próxima etapa)
+- Funciones para Pasajero
 
 	
 ## Changelog

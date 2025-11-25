@@ -216,12 +216,11 @@ class QV_Admin {
 					</th>
 					<td>
 						<select name="qv_estado">
-							<?php
-							$estados = [ 'programado' => 'Programado', 'curso' => 'En curso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado' ];
-							foreach ( $estados as $key => $label ) {
-								echo '<option value="'.esc_attr($key).'" '.selected($estado, $key, false).'>'.esc_html($label).'</option>';
-							}
-							?>
+							<?php foreach ( QV_Viajes_Utils::get_estados_viaje() as $key => $label ) : ?>
+								<option value="<?php echo esc_attr($key); ?>" <?php selected( $key, $estado ); ?>>
+									<?php echo esc_html( $label ); ?>
+								</option>
+							<?php endforeach; ?>
 						</select>
 					</td>
 				</tr>
