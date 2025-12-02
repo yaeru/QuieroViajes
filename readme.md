@@ -22,6 +22,7 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 - bug, email subjets on update
 - update, enviar email para admin cuando empresa pide viaje
 - bug, distancia solo se guarda cuando hay $ km
+- fix, empresa solo no puede editar estado viaje
 	
 ### Update
 - Update, email de notificaciones para emails de admin desde Viajes > Ajustes
