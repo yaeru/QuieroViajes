@@ -20,8 +20,8 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 - fix, Pasajero Login redirija al listado de viajes
 - Bug, importe no queda guardado de una
 - bug, email subjets on update
-- empresa puede ver viajes internos
-- enviar email para admin cuando empresa pide viaje
+- update, empresa puede ver viajes internos
+- update, enviar email para admin cuando empresa pide viaje
 	
 ### Update
 - metabox GASTOS extra solo admin

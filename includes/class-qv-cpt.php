@@ -38,6 +38,7 @@ class QV_CPT {
 		register_post_type( 'viaje', $args );
 	}
 
+	// Empresas CPT, Deprecado, borrar a futuro
 	public function register_empresas() {
 
 		$labels = [
