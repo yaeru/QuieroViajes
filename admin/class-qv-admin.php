@@ -228,15 +228,21 @@ class QV_Admin {
 						<label>Estado:</label>
 					</th>
 					<td>
-						<select name="qv_estado">
+						<select name="qv_estado" <?php echo current_user_can('administrator') ? '' : 'disabled'; ?>>
 							<?php foreach ( QV_Viajes_Utils::get_estados_viaje() as $key => $label ) : ?>
 								<option value="<?php echo esc_attr($key); ?>" <?php selected( $key, $estado ); ?>>
 									<?php echo esc_html( $label ); ?>
 								</option>
 							<?php endforeach; ?>
 						</select>
+
+						<?php if ( ! current_user_can('administrator') ) : ?>
+							<!-- Campo oculto para que el valor igual se envíe -->
+							<input type="hidden" name="qv_estado" value="<?php echo esc_attr( $estado ); ?>">
+						<?php endif; ?>
 					</td>
 				</tr>
+
 				<tr>
 					<th>
 						<label>Fecha programada:</label>

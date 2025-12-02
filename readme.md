@@ -16,22 +16,26 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 ## Roadmap
 
 ### Etapa 1
-- fix, Chequear que solo los usuarios puedan ver sus propios viajes
-- fix, Pasajero Login redirija al listado de viajes
-- Bug, importe no queda guardado de una
-- bug, email subjets on update
-- update, enviar email para admin cuando empresa pide viaje
-- bug, distancia solo se guarda cuando hay $ km
-- fix, empresa solo no puede editar estado viaje
+- Bug high, importe no queda guardado de una
+- Bug high, se muestran pasajeros de otras empresas cuando soy admin
+- fix high, Chequear que solo los usuarios puedan ver sus propios viajes
+- bug low, Pasajero Login redirija al listado de viajes
+
+
 	
 ### Update
-- Update, email de notificaciones para emails de admin desde Viajes > Ajustes
+- Update, Ahora el Importe por KM es un valor general, que se puede guardar desde Menu Viajes > Submenu Ajustes
+- Update, cuando una empresa crea un viaje, se envia un email a la casilla de Notificaciones
+- Update, La casilla de Notificaciones se define desde Menu Viajes > Submenu Ajustes
 - Update, Rol Empresa puede ver editar sus propios viajes, no asi los creados por el Admin
-- Update, Metabox Gastos extra solo visible por Admin
-- Update, Campo Importe x km solo visible por Aadmin
-- Update, Campo conductor solo visible por Admin
-- Update, Mis viajes solo para rol conductor
-- Bug, Mis viajes, Importe total columna oculta
+- Update, Al crear viaje el metabox Gastos extra solo visible por Admin
+- Update, Al crear viaje el campo Importe x km solo editable por Admin
+- Update, Al crear viaje el campo conductor solo visible por Admin
+- Update, Al crear viaje el campo Estado solo puede editar el Admin
+- Update, Menu Mis viajes solo se muestra al Conductor
+- Bug, asuntos de email correctos
+- Bug, Mis viajes para conductores, Importe total columna oculta
+- Bug, distancia solo se guarda cuando hay $ km. Ahora que siempre hay un km no pasa mas
 - Logo en el Iniciar sesion
 - Pagina visible solo para logueados
 - Foto perfiles
