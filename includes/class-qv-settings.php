@@ -34,6 +34,12 @@ class QV_Settings_Page {
 			'default'           => 0,
 		] );
 
+		register_setting( 'qv_settings_group', 'qv_importe_km_default', [
+			'type'              => 'number',
+			'sanitize_callback' => 'floatval',
+			'default'           => 0,
+		] );
+
 		register_setting( 'qv_settings_group', 'qv_email_admin_notificaciones', [
 			'type'              => 'string',
 			'sanitize_callback' => function( $email ) {
@@ -83,6 +89,15 @@ class QV_Settings_Page {
 					</tr>
 
 					<tr>
+						<th scope="row"><label for="qv_importe_km_default">Importe por KM por defecto ($)</label></th>
+						<td>
+							<input type="number" step="0.01" name="qv_importe_km_default" id="qv_importe_km_default"
+							value="<?php echo esc_attr( get_option('qv_importe_km_default', 0) ); ?>" class="small-text" />
+							<p class="description">Valor que se cargará automáticamente al crear un nuevo viaje.</p>
+						</td>
+					</tr>
+
+					<tr>
 						<th scope="row"><label for="qv_email_admin_notificaciones">email_notificaciones</label></th>
 						<td>
 							<input type="email" name="qv_email_admin_notificaciones" id="qv_email_admin_notificaciones"
@@ -116,6 +131,4 @@ class QV_Settings_Page {
 		</div>
 		<?php
 	}
-
-
 }
