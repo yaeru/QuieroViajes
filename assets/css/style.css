@@ -104,7 +104,7 @@ p {
 	content: "💲";
 }
 .qv-chip-distancia:before {
-	content: "🌎";
+	content: "🗺️";
 }
 .qv-chip-origen:before, .qv-chip-destino:before {
 	content: "📍";
@@ -182,15 +182,22 @@ p {
 
 #qvChipConductor {
 	.qv-grid {
-		/*grid-template-columns: 135px 1fr;*/
-		.qv-avatar {
+		grid-template-columns: 130px 1fr;
+		.qv-avatares {
 			display: flex;
-			img {
+			.qv-avatar {
 				width: 70px;
 				height: 70px;
 				z-index: 2;
+				border-radius: 100%;
+				img {
+					object-fit: cover;
+					background: red;
+					height: 70px;
+					width: 70px;
+				}
 			}
-			img:nth-child(2) {
+			.qv-avatar:nth-child(2) {
 				margin-left: -10px;
 				z-index: 1;
 			}

@@ -19,11 +19,11 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 - fix, Chequear que solo los usuarios puedan ver sus propios viajes
 - fix, Pasajero Login redirija al listado de viajes
 - Bug, importe no queda guardado de una
-- bug, email subjets
-- GASTOS extra solo admin
-- importe x km solo admin
+- bug, email subjets on update
+- metabox GASTOS extra solo admin
+- metabox importe x km solo admin
 - empresa puede ver viajes internos
-- email para admin cuando empresa pide viaje
+- enviar email para admin cuando empresa pide viaje
 	
 ### Update
 - fix, Mis viajes solo para rol conductor

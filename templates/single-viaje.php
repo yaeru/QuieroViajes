@@ -52,14 +52,18 @@ $es_admin		= current_user_can('manage_options');
 				<article id="qvChipConductor" class="qv-chip qv-chip-viaje-perfil">
 					<?php if ($conductor): ?>
 						<div class="qv-grid">
-							<figure class="qv-avatar">
-								<img src="<?php echo esc_url( get_avatar_url( $conductor->ID, ['size' => 100] ) ); ?>" width="100" height="100" alt="Avatar del conductor">
-								<?php 
-								if ($foto_auto_id) {
-									echo '<img src="' . esc_url(wp_get_attachment_url($foto_auto_id)) . '" alt="Vehículo del conductor" width="100" height="100"">';
-								}
-								?>
-							</figure>
+							<div class="qv-avatares">
+								<figure class="qv-avatar">
+									<img src="<?php echo esc_url( get_avatar_url( $conductor->ID, ['size' => 70] ) ); ?>" width="70" height="70" alt="Avatar del conductor">
+								</figure>
+								<figure class="qv-avatar">
+									<?php 
+									if ($foto_auto_id) {
+										echo '<img src="' . esc_url(wp_get_attachment_url($foto_auto_id)) . '" alt="Vehículo del conductor" width="70" height="70">';
+									}
+									?>
+								</figure>
+							</div>
 							<div>
 								<p class="qv-perfil-name">
 									<?php echo esc_html($conductor->display_name); ?>
@@ -167,6 +171,11 @@ $es_admin		= current_user_can('manage_options');
 				<p class="qv-chip-icon qv-chip-destino">Destino <br>
 					<span class="qv-resaltado"><?php echo esc_html($destino); ?></span>
 				</p>
+				<?php if ( ! $es_pasajero ) : ?>
+				<p class="qv-chip-icon qv-chip-distancia">Distancia <br>
+					<span class="qv-resaltado"><?php echo esc_html($distancia); ?> km</span>
+				</p>
+				<?php endif; ?>
 			</article>
 
 			<?php
