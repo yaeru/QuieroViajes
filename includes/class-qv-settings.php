@@ -34,11 +34,15 @@ class QV_Settings_Page {
 			'default'           => 0,
 		] );
 
-		register_setting( 'qv_settings_group', 'qv_costo_viaje_fijo', [
-			'type'              => 'number',
-			'sanitize_callback' => 'floatval',
-			'default'           => 0,
+		register_setting( 'qv_settings_group', 'qv_email_admin_notificaciones', [
+			'type'              => 'string',
+			'sanitize_callback' => function( $email ) {
+				$email = sanitize_email( $email );
+				return is_email( $email ) ? $email : '';
+			},
+			'default'			=> '',
 		] );
+
 
 		register_setting( 'qv_settings_group', 'qv_debug_mails', [
 			'type'              => 'boolean',
@@ -52,7 +56,7 @@ class QV_Settings_Page {
 	public function render_settings_page() {
 		$api_key   = get_option( 'qv_google_maps_api_key', '' );
 		$adicional = get_option( 'qv_adicional_viaje_corto', 0 );
-		$costo_fijo = get_option( 'qv_costo_viaje_fijo', 0 );
+		$email_notificaciones = get_option( 'qv_email_admin_notificaciones', 0 );
 		?>
 		<div class="wrap">
 			<h1>Ajustes de Quiero Viajes</h1>
@@ -77,14 +81,16 @@ class QV_Settings_Page {
 							<p class="description">Importe adicional aplicado a viajes cortos (en pesos).</p>
 						</td>
 					</tr>
+
 					<tr>
-						<th scope="row"><label for="qv_costo_viaje_fijo">Costo fijo por viaje ($)</label></th>
+						<th scope="row"><label for="qv_email_admin_notificaciones">email_notificaciones</label></th>
 						<td>
-							<input type="number" step="0.01" name="qv_costo_viaje_fijo" id="qv_costo_viaje_fijo"
-							value="<?php echo esc_attr( $costo_fijo ); ?>" class="small-text" />
-							<p class="description">Importe costo_fijo aplicado a viajes cortos (en pesos).</p>
+							<input type="email" name="qv_email_admin_notificaciones" id="qv_email_admin_notificaciones"
+							value="<?php echo esc_attr( $email_notificaciones ); ?>" class="regular-text" />
+							<p class="description">email_notificaciones al que se enviaran las notificaciones de nuevos viajes por parte de Empresas.</p>
 						</td>
 					</tr>
+
 					<tr>
 						<th scope="row"><label for="qv_debug_mails">Modo Debug de Emails</label></th>
 						<td>

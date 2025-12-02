@@ -13,7 +13,7 @@ class QV_Emails {
 		/* Solo para CPT viaje */
 		if ($post->post_type !== 'viaje') return;
 
-    	//error_log("QV_Emails: disparado en wp_insert_post para viaje $post_id (update=" . ($update ? 'true' : 'false') . ")");
+		/*error_log("QV_Emails: disparado en wp_insert_post para viaje $post_id (update=" . ($update ? 'true' : 'false') . ")");*/
 
 		$meta = $this->get_viaje_meta($post_id);
 		$empresa_id = (int) get_post_meta($post_id, '_qv_empresa', true);
