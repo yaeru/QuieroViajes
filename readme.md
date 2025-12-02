@@ -57,10 +57,10 @@ veces no lo carga ( Ver esto )
 ### Etapa 2
 - Login de frontend
 - Funciones para Pasajero
--- solo frontend
--- Perfil
--- Dashboard
--- Pasajero Login redirija al listado de viajes
+- - solo frontend
+- - Perfil
+- - Dashboard
+- - Pasajero Login redirija al listado de viajes
 - Colores personalisados
 - Codigo de seguridad
 - Ver la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en una próxima etapa)
