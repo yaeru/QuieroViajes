@@ -97,14 +97,16 @@ class QV_Admin {
 			'high'
 		);
 
-		add_meta_box(
-			'viaje_gastos_extra',
-			'Gastos Extra',
-			[ $this, 'render_gastos_extra_metabox' ],
-			'viaje',
-			'normal',
-			'default'
-		);
+		if ( current_user_can('manage_options') ) {
+			add_meta_box(
+				'viaje_gastos_extra',
+				'Gastos Extra',
+				[ $this, 'render_gastos_extra_metabox' ],
+				'viaje',
+				'normal',
+				'default'
+			);
+		}
 
 		add_meta_box(
 			'qv_resumen_viaje',
@@ -151,13 +153,15 @@ class QV_Admin {
 						<input type="hidden" id="qv_destino_lng" name="qv_destino_lng" value="<?php echo esc_attr( $destino_lng ); ?>">
 					</td>
 				</tr>
-				<tr>
-					<th>
-						<label>Importe por km:</label>
-					</th>
-					<td>
-						<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
-					</td>
+				<tr id="qvImportePorKm">
+					<?php if ( current_user_can('administrator') ) : ?>
+						<th>
+							<label>Importe por km:</label>
+						</th>
+						<td>
+							<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
+						</td>
+					<?php endif; ?>
 				</tr>
 			</tbody>
 		</table>
@@ -264,20 +268,22 @@ class QV_Admin {
 						<textarea name="qv_observaciones" rows="4" style="width:100%;"><?php echo esc_textarea( $observaciones ); ?></textarea>
 					</td>
 				</tr>
-				<tr>
-					<th>
-						<label>Conductor:</label>
-					</th>
-					<td>
-						<select name="qv_conductor">
-							<option value="">-- Seleccionar --</option>
-							<?php foreach ( $conductores as $conductor ) : ?>
-								<option value="<?php echo esc_attr( $conductor->ID ); ?>" <?php selected( $conductor_id, $conductor->ID ); ?>>
-									<?php echo esc_html( $conductor->display_name ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</td>
+				<tr id="qvConductor">
+					<?php if ( current_user_can('administrator') ) : ?>
+						<th>
+							<label>Conductor:</label>
+						</th>
+						<td>
+							<select name="qv_conductor">
+								<option value="">-- Seleccionar --</option>
+								<?php foreach ( $conductores as $conductor ) : ?>
+									<option value="<?php echo esc_attr( $conductor->ID ); ?>" <?php selected( $conductor_id, $conductor->ID ); ?>>
+										<?php echo esc_html( $conductor->display_name ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					<?php endif; ?>
 				</tr>
 			</tbody>
 		</table>
