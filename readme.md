@@ -19,7 +19,6 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 - Bug high, importe no queda guardado de una
 - Bug high, se muestran pasajeros de otras empresas cuando soy admin
 - fix high, Chequear que solo los usuarios puedan ver sus propios viajes
-- bug low, Pasajero Login redirija al listado de viajes
 
 
 	
@@ -56,10 +55,16 @@ veces no lo carga ( Ver esto )
 - exportar csv
 
 ### Etapa 2
+- Login de frontend
+- Funciones para Pasajero
+-- solo frontend
+-- Perfil
+-- Dashboard
+-- Pasajero Login redirija al listado de viajes
 - Colores personalisados
 - Codigo de seguridad
 - Ver la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en una próxima etapa)
-- Funciones para Pasajero
+
 
 ### emails
 Corven Sacif
