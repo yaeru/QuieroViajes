@@ -21,8 +21,10 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 - Bug, importe no queda guardado de una
 - bug, email subjets on update
 - update, enviar email para admin cuando empresa pide viaje
+- bug, distancia solo se guarda cuando hay $ km
 	
 ### Update
+- Update, email de notificaciones para emails de admin desde Viajes > Ajustes
 - Update, Rol Empresa puede ver editar sus propios viajes, no asi los creados por el Admin
 - Update, Metabox Gastos extra solo visible por Admin
 - Update, Campo Importe x km solo visible por Aadmin

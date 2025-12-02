@@ -4,28 +4,38 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class QV_Emails {
 
 	public function __construct() {
-		/* Enganchar al final del ciclo de inserción/actualización */
 		add_action('wp_insert_post', array($this, 'enviar_email_nuevo_viaje'), 10, 3);
 	}
 
-	/* Envía emails cuando se crea o actualiza un viaje */
 	public function enviar_email_nuevo_viaje($post_id, $post, $update) {
-		/* Solo para CPT viaje */
+
 		if ($post->post_type !== 'viaje') return;
 
-		/*error_log("QV_Emails: disparado en wp_insert_post para viaje $post_id (update=" . ($update ? 'true' : 'false') . ")");*/
-
-		$meta = $this->get_viaje_meta($post_id);
+		$meta       = $this->get_viaje_meta($post_id);
 		$empresa_id = (int) get_post_meta($post_id, '_qv_empresa', true);
 
-		/* Destinatarios: pasajero, conductor y operadores */
+		// Emails de pasajero, conductor y empresa
 		$recipients = array_filter(array(
 			$this->get_user_email($meta['pasajero_id']),
 			$this->get_user_email($meta['conductor_id']),
 			$this->get_user_email($empresa_id),
 		));
 
-		$recipients = array_unique(array_merge($recipients, $this->get_role_emails('operador')));
+		// Nuevo: Enviar copia al dueño de la web */
+		$admin_email = get_option('qv_email_admin_notificaciones', '');
+
+		if (is_email($admin_email)) {
+
+			// Solo si el autor del viaje ES role empresa
+			$author_id = $post->post_author;
+			$author    = get_userdata($author_id);
+
+			if ($author && in_array('empresa', $author->roles)) {
+				$recipients[] = $admin_email;
+			}
+		}
+
+		$recipients = array_unique($recipients);
 
 		if (empty($recipients)) {
 			return;
@@ -35,11 +45,9 @@ class QV_Emails {
 			$recipient_id   = $this->get_user_id_by_email($to);
 			$recipient_name = $recipient_id ? $this->get_user_name($recipient_id) : 'Usuario';
 
-			if ($update) {
-				$subject = "Actualización en tu viaje #{$post_id}";
-			} else {
-				$subject = "Nuevo viaje programado #{$post_id}";
-			}
+			$subject = $update
+			? "Actualización en tu viaje #{$post_id}"
+			: "Nuevo viaje programado #{$post_id}";
 
 			$message = QV_Email_Templates::viaje($post_id, $meta, $recipient_name, $update);
 			$headers = array('Content-Type: text/html; charset=UTF-8');
@@ -64,7 +72,6 @@ class QV_Emails {
 		);
 	}
 
-
 	private function get_user_email($user_id) {
 		$u = get_userdata($user_id);
 		return $u ? $u->user_email : '';
@@ -80,6 +87,7 @@ class QV_Emails {
 		return $user ? $user->ID : 0;
 	}
 
+	// Mantengo esta función por compatibilidad, aunque ya no se usa
 	private function get_role_emails($role) {
 		$users = get_users(array('role' => $role, 'fields' => array('user_email')));
 		return array_map(function($u){ return $u->user_email; }, $users);
