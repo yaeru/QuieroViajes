@@ -9,6 +9,9 @@
 	--qv-radius: 10px;
 	--qv-breakpoints-md: 981px;
 }
+.qv-hidden-non-admin {
+	display: none !important;
+}
 
 .qv-metabox input, .qv-metabox select, .qv-metabox textarea {
 	width: 100%;

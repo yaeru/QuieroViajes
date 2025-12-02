@@ -154,15 +154,24 @@ class QV_Admin {
 					</td>
 				</tr>
 				<tr id="qvImportePorKm">
-					<?php if ( current_user_can('administrator') ) : ?>
-						<th>
-							<label>Importe por km:</label>
-						</th>
-						<td>
-							<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>">
-						</td>
-					<?php endif; ?>
+					<th>
+						<label for="qv_importe_km">Importe por km:</label>
+					</th>
+					<td>
+						<?php 
+						$is_admin = current_user_can('administrator'); 
+						$readonly = $is_admin ? '' : 'readonly';
+						?>
+						
+						<input  type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>" <?php echo $readonly; ?>>
+						<?php if (!$is_admin): ?>
+							<p style="font-size:11px;color:#666;margin-top:4px;">
+								Este valor sólo puede ser modificado por administradores.
+							</p>
+						<?php endif; ?>
+					</td>
 				</tr>
+
 			</tbody>
 		</table>
 
