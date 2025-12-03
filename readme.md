@@ -16,14 +16,14 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 ## Roadmap
 
 ### Etapa 1
-- Bug high, se muestran pasajeros de otras empresas cuando soy admin
 - Bug high, importe no queda guardado de una
-
 - fix high, Chequear que solo los usuarios puedan ver sus propios viajes
-
 
 	
 ### Update
+- Bug, solo se muestran pasajeros de las empresas seleccionadas
+
+Enviado
 - Update, Ahora el Importe por KM es un valor general, que se puede guardar desde Menu Viajes > Submenu Ajustes
 - Update, cuando una empresa crea un viaje, se envia un email a la casilla de Notificaciones
 - Update, La casilla de Notificaciones se define desde Menu Viajes > Submenu Ajustes
