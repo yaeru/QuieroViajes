@@ -3,7 +3,7 @@
  * Plugin Name: Quiero Viajes
  * Plugin URI: https://quierohacertuweb.com
  * Description: Gestión de viajes con detalles, origen/destino y cálculo de importes.
- * Version: 0.1.94
+ * Version: 0.1.95
  * Author: Yael Duckwen
  * Author URI: https://quierohacertuweb.com
  * License: GPL2
@@ -73,17 +73,37 @@ add_action( 'wp_enqueue_scripts', 'qv_enqueue_frontend_styles' );
 
 // Cargar estilos solo en el backend (área de administración)
 function qv_enqueue_admin_styles( $hook ) {
-	global $post_type;
-	if ( $post_type === 'viaje' ) {
-		wp_enqueue_style(
-			'qv-admin-style',
-			plugin_dir_url( __FILE__ ) . 'assets/css/admin.css',
-			array(),
-			filemtime( plugin_dir_path( __FILE__ ) . 'assets/css/admin.css' )
-		);
-	}
+    global $post_type;
+
+    // Solo cargar en el CPT viaje
+    if ( $post_type === 'viaje' ) {
+
+        // CSS existente
+        wp_enqueue_style(
+            'qv-admin-style',
+            plugin_dir_url( __FILE__ ) . 'assets/css/admin.css',
+            array(),
+            filemtime( plugin_dir_path( __FILE__ ) . 'assets/css/admin.css' )
+        );
+
+        // JS nuevo (tu archivo existente qv-admin.js)
+        wp_enqueue_script(
+            'qv-admin-js',
+            plugin_dir_url( __FILE__ ) . 'assets/js/qv-admin.js',
+            array('jquery'),
+            filemtime( plugin_dir_path( __FILE__ ) . 'assets/js/qv-admin.js' ),
+            true
+        );
+
+        // Pasar variables a JS
+        wp_localize_script('qv-admin-js', 'qvAjax', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('qv_filtrar_pasajeros'),
+        ]);
+    }
 }
 add_action( 'admin_enqueue_scripts', 'qv_enqueue_admin_styles' );
+
 
 // Inicializar plugin
 function qv_init_plugin() {
@@ -134,4 +154,38 @@ add_action( 'admin_head', function() {
 		display: none !important;
 	}
 	</style>';
+});
+
+
+/**/
+add_action('wp_ajax_qv_filtrar_pasajeros', function() {
+
+    check_ajax_referer('qv_filtrar_pasajeros', 'nonce');
+
+    $empresa_id = intval($_POST['empresa_id']);
+
+    $args = [
+        'role'    => 'pasajero',
+        'orderby' => 'display_name',
+        'order'   => 'ASC',
+    ];
+
+    $pasajeros = get_users($args);
+
+    // Filtrar por empresa
+    if ($empresa_id) {
+        $pasajeros = array_filter($pasajeros, function($u) use ($empresa_id){
+            return get_user_meta($u->ID, 'empresa_id', true ) == $empresa_id;
+        });
+    }
+
+    // Preparar respuesta
+    $data = array_map(function($u){
+        return [
+            'id'   => $u->ID,
+            'name' => $u->display_name
+        ];
+    }, $pasajeros);
+
+    wp_send_json_success(array_values($data));
 });

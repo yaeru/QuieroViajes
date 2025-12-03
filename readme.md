@@ -16,8 +16,9 @@ Paso 2, cargar la API Key en menu Admin de Wordpress Viajes > Ajustes
 ## Roadmap
 
 ### Etapa 1
-- Bug high, importe no queda guardado de una
 - Bug high, se muestran pasajeros de otras empresas cuando soy admin
+- Bug high, importe no queda guardado de una
+
 - fix high, Chequear que solo los usuarios puedan ver sus propios viajes
 
 
@@ -61,17 +62,6 @@ veces no lo carga ( Ver esto )
 - - Perfil
 - - Dashboard
 - - Pasajero Login redirija al listado de viajes
-- Colores personalisados
+- Colores personalizados
 - Codigo de seguridad
 - Ver la opción de Abonar con Sistema Pago Link o Mercado Pago ( puede ser en una próxima etapa)
-
-
-### emails
-Corven Sacif
-corven@corven.com.ar
-
-Grupo Disal S.A.
-grupodisal@grupodisal.com.ar
-
-Hernan Chofer
-empresaaltonivel@gmail.com
