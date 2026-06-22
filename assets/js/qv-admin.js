@@ -24,56 +24,63 @@ jQuery(function($){
 	// ---------------------------------------------------
 	// CAMBIO DINÁMICO DE EMPRESA (Precios + Pasajeros)
 	// ---------------------------------------------------
+	
+	// Guardamos el importe con el que abrió el formulario (el default de ajustes)
+	const $importeInput = $('#qv_importe_km');
+	const importeInicial = $importeInput.val();
+
 	$('#qv_empresa').on('change', function(){
 		const empresaID = $(this).val();
 
-		// 1. MODIFICACIÓN: Actualizar el importe por KM según la empresa elegida
+		// 1. MODIFICACIÓN: Actualizar el importe por KM SOLO si la empresa tiene uno propio
 		const optionSeleccionada = $(this).find('option:selected');
 		const nuevoImporte = optionSeleccionada.attr('data-importe-km');
 
-		if (nuevoImporte !== undefined && nuevoImporte !== null) {
-			const $importeInput = $('#qv_importe_km');
+		// Si la empresa tiene un importe personalizado cargado (no está vacío ni es undefined)
+		if (nuevoImporte !== undefined && nuevoImporte !== '') {
 			$importeInput.val(nuevoImporte);
-			
-			// Actualizar texto del resumen lateral antes de que responda la API de Google
-			const $importeDisplay = $('#qv-importe-km-display');
-			if ($importeDisplay.length) {
-				const numImporte = parseFloat(nuevoImporte.replace(',', '.'));
-				$importeDisplay.text(isNaN(numImporte) ? nuevoImporte : numImporte.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-			}
-
-			// Disparar el recalculo completo del viaje con la nueva tarifa
-			calcularResumen();
+		} else {
+			// Si la empresa NO tiene importe personalizado, restauramos el valor inicial de ajustes
+			$importeInput.val(importeInicial);
+		}
+		
+		// Actualizar el texto del resumen lateral con el valor que quedó definido
+		const valorActual = $importeInput.val();
+		const $importeDisplay = $('#qv-importe-km-display');
+		if ($importeDisplay.length && valorActual) {
+			const numImporte = parseFloat(valorActual.replace(',', '.'));
+			$importeDisplay.text(isNaN(numImporte) ? valorActual : numImporte.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 		}
 
-		// 2. Filtrado dinámico de pasajeros que ya tenías (AJAX)
-        const $select = $('select[name="qv_pasajero"]');
+		// Disparar el cálculo completo del viaje
+		calcularResumen();
 
-        if (!empresaID) {
-            // Si no hay empresa elegida, vaciamos el select y lo deshabilitamos
-            $select.empty().append('<option value="">-- Seleccionar pasajero --</option>').prop('disabled', true);
-            return;
-        }
+		// 2. Filtrado dinámico de pasajeros (AJAX)
+		const $select = $('select[name="qv_pasajero"]');
 
-        $.post(qvAjax.ajaxurl, {
-            action: 'qv_filtrar_pasajeros',
-            nonce: qvAjax.nonce,
-            empresa_id: empresaID
-        }, function(response){
-            if (!response.success) return;
+		if (!empresaID) {
+			$select.empty().append('<option value="">-- Seleccionar pasajero --</option>').prop('disabled', true);
+			return;
+		}
 
-            const pasajeros = response.data;
+		$.post(qvAjax.ajaxurl, {
+			action: 'qv_filtrar_pasajeros',
+			nonce: qvAjax.nonce,
+			empresa_id: empresaID
+		}, function(response){
+			if (!response.success) return;
 
-            $select.empty();
-            $select.append('<option value="">-- Seleccionar pasajero --</option>');
+			const pasajeros = response.data;
 
-            pasajeros.forEach(p => {
-                $select.append(`<option value="${p.id}">${p.name}</option>`);
-            });
+			$select.empty();
+			$select.append('<option value="">-- Seleccionar pasajero --</option>');
 
-            // Una vez que los pasajeros cargaron bien, habilitamos el campo
-            $select.prop('disabled', false);
-        });
+			pasajeros.forEach(p => {
+				$select.append(`<option value="${p.id}">${p.name}</option>`);
+			});
+
+			$select.prop('disabled', false);
+		});
 	});
 
 });

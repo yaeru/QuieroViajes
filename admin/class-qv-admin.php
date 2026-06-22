@@ -136,16 +136,16 @@ class QV_Admin {
 		// LÓGICA DE IMPORTE POR KM POR DEFECTO
 		$importe_km  = get_post_meta( $post->ID, '_qv_importe_km', true );
 		
-		if ( empty( $importe_km ) ) {
+		if ( $importe_km === '' ) { // Validación estricta: solo si está totalmente vacío
 			$empresa_id = get_post_meta( $post->ID, '_qv_empresa', true );
 			if ( $empresa_id ) {
-				// Si el viaje tiene empresa asignada, intentamos jalar el del perfil de esa empresa
+				// Intentamos extraer el importe del perfil de la empresa
 				$importe_km = get_user_meta( $empresa_id, 'importe_km_empresa', true );
 			}
-			// Si sigue estando vacío porque la empresa no tiene o no hay empresa seleccionada, usa el de ajustes generales
-			if ( empty( $importe_km ) ) {
-				// Reemplaza 'qv_importe_km_general' por el nombre real del campo que usas en Ajustes generales si difiere
-				$importe_km = get_option( 'qv_importe_km_general', '0' ); 
+			// Si sigue estando vacío (no hay empresa seleccionada o la empresa tiene el campo vacío)
+			if ( $importe_km === '' ) {
+				// ⚠️ IMPORTANTE: Asegurate de que 'qv_importe_km_general' sea el nombre EXACTO de tu campo en los Ajustes
+				$importe_km = get_option( 'qv_importe_km_general', '' ); 
 			}
 		}
 		?>
@@ -378,8 +378,8 @@ class QV_Admin {
 			});
 		}
 
-		// Obtenemos el importe general por si la empresa seleccionada no tiene uno propio
-		$importe_general = get_option( 'qv_importe_km_general', '0' );
+		// ⚠️ IMPORTANTE: Asegurate de que 'qv_importe_km_general' sea el nombre EXACTO de tu campo en los Ajustes
+		$importe_general = get_option( 'qv_importe_km_general', '' );
 		?>
 		<table class="form-table qv-metabox">
 			<tbody>
@@ -389,14 +389,15 @@ class QV_Admin {
 						<select name="qv_empresa" id="qv_empresa" data-importe-general="<?php echo esc_attr($importe_general); ?>" <?php echo in_array('empresa', (array)$current_user->roles) ? 'disabled' : ''; ?>>
 							<option value="" data-importe-km="<?php echo esc_attr($importe_general); ?>">-- Seleccionar --</option>
 							<?php foreach ( $empresas as $empresa ) : 
-								$imp_empresa = get_user_meta($empresa->ID, 'importe_km_empresa', true);
-								// Si la empresa no tiene importe configurado, usará el general
-								$val_importe = !empty($imp_empresa) ? $imp_empresa : $importe_general;
-								?>
-								<option value="<?php echo esc_attr( $empresa->ID ); ?>" data-importe-km="<?php echo esc_attr($val_importe); ?>" <?php selected( $empresa_id, $empresa->ID ); ?>>
-									<?php echo esc_html( $empresa->display_name ); ?>
-								</option>
-							<?php endforeach; ?>
+			// Obtenemos el valor real. Si no tiene nada, $imp_empresa será una cadena vacía ''
+			$imp_empresa = get_user_meta($empresa->ID, 'importe_km_empresa', true);
+			?>
+			<option value="<?php echo esc_attr( $empresa->ID ); ?>" 
+			        data-importe-km="<?php echo esc_attr($imp_empresa); ?>" 
+			        <?php selected( $empresa_id, $empresa->ID ); ?>>
+				<?php echo esc_html( $empresa->display_name ); ?>
+			</option>
+		<?php endforeach; ?>
 						</select>
 						<?php if ( in_array('empresa', (array)$current_user->roles) ) : ?>
 							<input type="hidden" name="qv_empresa" value="<?php echo esc_attr( $empresa_id ); ?>">
