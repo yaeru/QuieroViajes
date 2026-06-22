@@ -1,11 +1,86 @@
-document.addEventListener("DOMContentLoaded", function() {
+jQuery(function($){
+
+	// Inicialización del sistema al cargar la página
 	if (typeof google !== "undefined" && google.maps && google.maps.places) {
 		initAutocomplete();
-		calcularResumen(); // Calcular al cargar si ya hay datos
+		calcularResumen(); // Calcular al cargar si ya hay datos previos
 	} else {
 		console.error("Google Maps API no cargó correctamente.");
 	}
+
+	// Registrar listeners globales para cambios en inputs clave
+	["qv_origen", "qv_destino", "qv_importe_km"].forEach(id => {
+		const el = document.getElementById(id);
+		if (el) el.addEventListener("change", calcularResumen);
+	});
+
+	// Escuchar cambios dinámicos en la tabla de gastos extra
+	document.body.addEventListener("input", e => {
+		if (e.target.name && e.target.name.includes("gastos_extra")) {
+			calcularResumen();
+		}
+	});
+
+	// ---------------------------------------------------
+	// CAMBIO DINÁMICO DE EMPRESA (Precios + Pasajeros)
+	// ---------------------------------------------------
+	$('#qv_empresa').on('change', function(){
+		const empresaID = $(this).val();
+
+		// 1. MODIFICACIÓN: Actualizar el importe por KM según la empresa elegida
+		const optionSeleccionada = $(this).find('option:selected');
+		const nuevoImporte = optionSeleccionada.attr('data-importe-km');
+
+		if (nuevoImporte !== undefined && nuevoImporte !== null) {
+			const $importeInput = $('#qv_importe_km');
+			$importeInput.val(nuevoImporte);
+			
+			// Actualizar texto del resumen lateral antes de que responda la API de Google
+			const $importeDisplay = $('#qv-importe-km-display');
+			if ($importeDisplay.length) {
+				const numImporte = parseFloat(nuevoImporte.replace(',', '.'));
+				$importeDisplay.text(isNaN(numImporte) ? nuevoImporte : numImporte.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+			}
+
+			// Disparar el recalculo completo del viaje con la nueva tarifa
+			calcularResumen();
+		}
+
+		// 2. Filtrado dinámico de pasajeros que ya tenías (AJAX)
+        const $select = $('select[name="qv_pasajero"]');
+
+        if (!empresaID) {
+            // Si no hay empresa elegida, vaciamos el select y lo deshabilitamos
+            $select.empty().append('<option value="">-- Seleccionar pasajero --</option>').prop('disabled', true);
+            return;
+        }
+
+        $.post(qvAjax.ajaxurl, {
+            action: 'qv_filtrar_pasajeros',
+            nonce: qvAjax.nonce,
+            empresa_id: empresaID
+        }, function(response){
+            if (!response.success) return;
+
+            const pasajeros = response.data;
+
+            $select.empty();
+            $select.append('<option value="">-- Seleccionar pasajero --</option>');
+
+            pasajeros.forEach(p => {
+                $select.append(`<option value="${p.id}">${p.name}</option>`);
+            });
+
+            // Una vez que los pasajeros cargaron bien, habilitamos el campo
+            $select.prop('disabled', false);
+        });
+	});
+
 });
+
+// ---------------------------------------------------
+// FUNCIONES GLOBALES (Mantienen Vanilla JS independiente)
+// ---------------------------------------------------
 
 function initAutocomplete() {
 	const origenInput = document.getElementById("qv_origen");
@@ -37,14 +112,12 @@ function initAutocomplete() {
 		});
 	}
 
-	// recalcular si cambia el importe por km manualmente
+	// Recalcular si cambia el importe por km manualmente (Admin editando)
 	const importeKmInput = document.getElementById("qv_importe_km");
 	if (importeKmInput) {
 		importeKmInput.addEventListener("input", calcularResumen);
 	}
 }
-
-// ---------------------------------------------------
 
 function calcularResumen() {
 	const origen = document.getElementById("qv_origen")?.value;
@@ -96,105 +169,55 @@ function calcularResumen() {
 			});
 			gastosExtras = Math.ceil(gastosExtras);
 
-				/* Cálculos (redondeo hacia arriba) */
-				const importeBase = Math.ceil(distanciaKm * importeKm); // distancia × importe/km
-				const adicionalAplicado = distanciaKm <= 10 ? Math.ceil(adicionalNum) : 0;
-				const totalGeneral = Math.ceil(importeBase + gastosExtras + adicionalAplicado);
+			/* Cálculos (redondeo hacia arriba) */
+			const importeBase = Math.ceil(distanciaKm * importeKm); // distancia × importe/km
+			const adicionalAplicado = distanciaKm <= 10 ? Math.ceil(adicionalNum) : 0;
+			const totalGeneral = Math.ceil(importeBase + gastosExtras + adicionalAplicado);
 
-				/* Actualizar visuales */
-				const distanciaSpan = document.getElementById("qv-distancia");
-				const importeKmDisplay = document.getElementById("qv-importe-km-display");
-				const importeEstimadoSpan = document.getElementById("qv-importe"); // Importe estimado (distancia * km)
-				const totalContainer = document.querySelector(".qv-resumen-total"); // Total final (importe estimado + extras + adicional)
-				const adicionalElemento = document.getElementById("qv-adicional");
-				const adicionalValorSpan = document.getElementById("qv-adicional-valor");
+			/* Referencias visuales en el DOM */
+			const distanciaSpan = document.getElementById("qv-distancia");
+			const importeKmDisplay = document.getElementById("qv-importe-km-display");
+			const importeEstimadoSpan = document.getElementById("qv-importe");
+			const totalContainer = document.querySelector(".qv-resumen-total");
+			const adicionalElemento = document.getElementById("qv-adicional");
+			const adicionalValorSpan = document.getElementById("qv-adicional-valor");
 
-				/* actualizar visuales */
-				if (distanciaSpan) distanciaSpan.textContent = distanciaTexto;
-				if (importeKmDisplay) importeKmDisplay.textContent = Math.ceil(importeKm).toLocaleString('es-AR');
-
-				/* Importe estimado = SOLO distancia * importe/km (redondeado hacia arriba) */
-				if (importeEstimadoSpan) {
-					importeEstimadoSpan.textContent = importeBase.toLocaleString('es-AR');
-				}
-
-				/* Mostrar/ocultar adicional y su valor */
-				if (adicionalElemento && adicionalValorSpan) {
-					if (adicionalAplicado > 0) {
-						adicionalElemento.style.display = "";
-						adicionalValorSpan.textContent = adicionalAplicado.toLocaleString('es-AR');
-					} else {
-						adicionalElemento.style.display = "none";
-					}
-				}
-
-				/* Total general (importe estimado + gastos extra + adicional) */
-				if (totalContainer) {
-					totalContainer.innerHTML = `<strong>Total:</strong> $${totalGeneral.toLocaleString('es-AR')}`;
-				}
-
-				/* Actualizar hidden inputs (si los usás para guardar) */
-				const distanciaInput = document.getElementById("qv_distancia_input");
-				const importeInputHidden = document.getElementById("qv_importe_input"); /* antes guardabas esto */
-				if (distanciaInput) distanciaInput.value = distanciaKm.toFixed(2);
-				if (importeInputHidden) importeInputHidden.value = importeBase; /* guardar importe estimado (solo distancia*km) */
-
-
-			} else {
-				console.error("Error en DistanceMatrix:", status);
+			/* Actualizar visuales */
+			if (distanciaSpan) distanciaSpan.textContent = distanciaTexto;
+			
+			// Cambiado a 2 decimales fijos por si hay centavos en el precio del KM (ej: $150.50)
+			if (importeKmDisplay) {
+				importeKmDisplay.textContent = importeKm.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 			}
+
+			/* Importe estimado = SOLO distancia * importe/km (redondeado hacia arriba) */
+			if (importeEstimadoSpan) {
+				importeEstimadoSpan.textContent = importeBase.toLocaleString('es-AR');
+			}
+
+			/* Mostrar/ocultar adicional y su valor */
+			if (adicionalElemento && adicionalValorSpan) {
+				if (adicionalAplicado > 0) {
+					adicionalElemento.style.display = "";
+					adicionalValorSpan.textContent = adicionalAplicado.toLocaleString('es-AR');
+				} else {
+					adicionalElemento.style.display = "none";
+				}
+			}
+
+			/* Total general (importe estimado + gastos extra + adicional) */
+			if (totalContainer) {
+				totalContainer.innerHTML = `<strong>Total:</strong> $${totalGeneral.toLocaleString('es-AR')}`;
+			}
+
+			/* Actualizar hidden inputs para guardar en la base de datos */
+			const distanciaInput = document.getElementById("qv_distancia_input");
+			const importeInputHidden = document.getElementById("qv_importe_input");
+			if (distanciaInput) distanciaInput.value = distanciaKm.toFixed(2);
+			if (importeInputHidden) importeInputHidden.value = importeBase;
+
+		} else {
+			console.error("Error en DistanceMatrix:", status);
 		}
-		);
+	});
 }
-
-/* Escuchar cambios para recalcular siempre */
-document.addEventListener("DOMContentLoaded", function () {
-	if (typeof google !== "undefined" && google.maps) {
-		calcularResumen();
-		["qv_origen", "qv_destino", "qv_importe_km"].forEach(id => {
-			const el = document.getElementById(id);
-			if (el) el.addEventListener("change", calcularResumen);
-		});
-
-		/* También escuchar cambios en los gastos extra */
-		document.body.addEventListener("input", e => {
-			if (e.target.name && e.target.name.includes("gastos_extra")) {
-				calcularResumen();
-			}
-		});
-	}
-});
-
-
-/*---*/
-jQuery(function($){
-
-    // Filtrado dinámico de pasajeros según empresa seleccionada
-    $('#qv_empresa').on('change', function(){
-
-        const empresaID = $(this).val();
-
-        $.post(qvAjax.ajaxurl, {
-            action: 'qv_filtrar_pasajeros',
-            nonce: qvAjax.nonce,
-            empresa_id: empresaID
-        }, function(response){
-
-            if (!response.success) return;
-
-            const pasajeros = response.data;
-            const $select = $('select[name="qv_pasajero"]');
-
-            $select.empty();
-            $select.append('<option value="">-- Seleccionar pasajero --</option>');
-
-            pasajeros.forEach(p => {
-                $select.append(`<option value="${p.id}">${p.name}</option>`);
-            });
-
-        });
-
-    });
-
-});
-

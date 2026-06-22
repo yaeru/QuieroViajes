@@ -98,11 +98,11 @@ class QV_Settings_Page {
 					</tr>
 
 					<tr>
-						<th scope="row"><label for="qv_email_admin_notificaciones">email_notificaciones</label></th>
+						<th scope="row"><label for="qv_email_admin_notificaciones">Email de notificciones</label></th>
 						<td>
 							<input type="email" name="qv_email_admin_notificaciones" id="qv_email_admin_notificaciones"
 							value="<?php echo esc_attr( $email_notificaciones ); ?>" class="regular-text" />
-							<p class="description">email_notificaciones al que se enviaran las notificaciones de nuevos viajes por parte de Empresas.</p>
+							<p class="description">Email al que se enviaran las notificaciones de nuevos viajes por parte de Empresas.</p>
 						</td>
 					</tr>
 

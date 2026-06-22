@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
 /* Envío centralizado con modo debug */
 
 if (!function_exists('qv_send_mail')) {

@@ -14,12 +14,15 @@ class QV_Admin {
 		/* Avisos de error Google Maps */
 		add_action( 'admin_head', [ $this, 'gmaps_auth_failure_handler' ] );
 		add_action( 'admin_notices', [ $this, 'gmaps_admin_notice' ] );
+
+		/* Script para actualizar el importe dinámicamente */
+		//add_action( 'admin_footer', [ $this, 'qv_script_cambio_empresa' ] );
 	}
 
 	public function enqueue_admin_scripts( $hook ) {
 		global $post;
 		if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
-			if ( $post->post_type === 'viaje' ) {
+			if ( $post && $post->post_type === 'viaje' ) {
 
 				$api_key = defined('QV_GOOGLE_MAPS_API_KEY') ? QV_GOOGLE_MAPS_API_KEY : '';
 
@@ -129,7 +132,22 @@ class QV_Admin {
 		$destino     = get_post_meta( $post->ID, '_qv_destino', true );
 		$destino_lat = get_post_meta( $post->ID, '_qv_destino_lat', true );
 		$destino_lng = get_post_meta( $post->ID, '_qv_destino_lng', true );
-		$importe_km    = get_post_meta( $post->ID, '_qv_importe_km', true );
+		
+		// LÓGICA DE IMPORTE POR KM POR DEFECTO
+		$importe_km  = get_post_meta( $post->ID, '_qv_importe_km', true );
+		
+		if ( empty( $importe_km ) ) {
+			$empresa_id = get_post_meta( $post->ID, '_qv_empresa', true );
+			if ( $empresa_id ) {
+				// Si el viaje tiene empresa asignada, intentamos jalar el del perfil de esa empresa
+				$importe_km = get_user_meta( $empresa_id, 'importe_km_empresa', true );
+			}
+			// Si sigue estando vacío porque la empresa no tiene o no hay empresa seleccionada, usa el de ajustes generales
+			if ( empty( $importe_km ) ) {
+				// Reemplaza 'qv_importe_km_general' por el nombre real del campo que usas en Ajustes generales si difiere
+				$importe_km = get_option( 'qv_importe_km_general', '0' ); 
+			}
+		}
 		?>
 		<table class="form-table qv-metabox">
 			<tbody>
@@ -163,7 +181,7 @@ class QV_Admin {
 						$readonly = $is_admin ? '' : 'readonly';
 						?>
 						
-						<input  type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>" <?php echo $readonly; ?>>
+						<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>" <?php echo $readonly; ?>>
 						<?php if (!$is_admin): ?>
 							<p style="font-size:11px;color:#666;margin-top:4px;">
 								Este valor sólo puede ser modificado por administradores.
@@ -211,8 +229,6 @@ class QV_Admin {
 		$estado        = get_post_meta( $post->ID, '_qv_estado', true );
 		$fecha         = get_post_meta( $post->ID, '_qv_fecha', true );
 		$hora          = get_post_meta( $post->ID, '_qv_hora', true );
-		$empresa_id    = get_post_meta( $post->ID, '_qv_empresa', true );
-		
 		$pago          = get_post_meta( $post->ID, '_qv_pago', true );
 		$observaciones = get_post_meta( $post->ID, '_qv_observaciones', true );
 		$conductor_id  = get_post_meta( $post->ID, '_qv_conductor', true );
@@ -237,7 +253,6 @@ class QV_Admin {
 						</select>
 
 						<?php if ( ! current_user_can('administrator') ) : ?>
-							<!-- Campo oculto para que el valor igual se envíe -->
 							<input type="hidden" name="qv_estado" value="<?php echo esc_attr( $estado ); ?>">
 						<?php endif; ?>
 					</td>
@@ -363,16 +378,22 @@ class QV_Admin {
 			});
 		}
 
+		// Obtenemos el importe general por si la empresa seleccionada no tiene uno propio
+		$importe_general = get_option( 'qv_importe_km_general', '0' );
 		?>
 		<table class="form-table qv-metabox">
 			<tbody>
 				<tr>
 					<th><label>Empresa:</label></th>
 					<td>
-						<select name="qv_empresa" id="qv_empresa" <?php echo in_array('empresa', (array)$current_user->roles) ? 'disabled' : ''; ?>>
-							<option value="">-- Seleccionar --</option>
-							<?php foreach ( $empresas as $empresa ) : ?>
-								<option value="<?php echo esc_attr( $empresa->ID ); ?>" <?php selected( $empresa_id, $empresa->ID ); ?>>
+						<select name="qv_empresa" id="qv_empresa" data-importe-general="<?php echo esc_attr($importe_general); ?>" <?php echo in_array('empresa', (array)$current_user->roles) ? 'disabled' : ''; ?>>
+							<option value="" data-importe-km="<?php echo esc_attr($importe_general); ?>">-- Seleccionar --</option>
+							<?php foreach ( $empresas as $empresa ) : 
+								$imp_empresa = get_user_meta($empresa->ID, 'importe_km_empresa', true);
+								// Si la empresa no tiene importe configurado, usará el general
+								$val_importe = !empty($imp_empresa) ? $imp_empresa : $importe_general;
+								?>
+								<option value="<?php echo esc_attr( $empresa->ID ); ?>" data-importe-km="<?php echo esc_attr($val_importe); ?>" <?php selected( $empresa_id, $empresa->ID ); ?>>
 									<?php echo esc_html( $empresa->display_name ); ?>
 								</option>
 							<?php endforeach; ?>
@@ -385,7 +406,7 @@ class QV_Admin {
 				<tr>
 					<th><label>Pasajero:</label></th>
 					<td>
-						<select name="qv_pasajero">
+						<select name="qv_pasajero" id="qv_pasajero" <?php disabled( empty( $empresa_id ) ); ?>>
 							<option value="">-- Seleccionar pasajero --</option>
 							<?php foreach ( $pasajeros as $p ) : ?>
 								<option value="<?php echo esc_attr( $p->ID ); ?>" <?php selected( $pasajero_id, $p->ID ); ?>>
@@ -506,9 +527,18 @@ class QV_Admin {
 		$destino      = get_post_meta( $post->ID, '_qv_destino', true );
 		$destino_lat  = get_post_meta( $post->ID, '_qv_destino_lat', true );
 		$destino_lng  = get_post_meta( $post->ID, '_qv_destino_lng', true );
-		$importe_km   = get_post_meta( $post->ID, '_qv_importe_km', true );
 		$distancia    = get_post_meta( $post->ID, '_qv_distancia', true );
 		$distancia    = floatval( $distancia );
+
+		// Mismo fallback de lógica para el Importe por KM en el resumen visual lateral
+		$importe_km   = get_post_meta( $post->ID, '_qv_importe_km', true );
+		if ( empty($importe_km) ) {
+			$empresa_id = get_post_meta( $post->ID, '_qv_empresa', true );
+			$importe_km = $empresa_id ? get_user_meta( $empresa_id, 'importe_km_empresa', true ) : '';
+			if ( empty($importe_km) ) {
+				$importe_km = get_option( 'qv_importe_km_general', '0' );
+			}
+		}
 
 		/* Obtener adicional configurado */
 		$adicional_viaje_corto = get_option( 'qv_adicional_viaje_corto', 0 );
@@ -536,18 +566,17 @@ class QV_Admin {
 			}
 		}
 		$adicional_aplicado = get_post_meta( $post->ID, '_qv_adicional_aplicado', true );
-		$total_general = round( floatval( $importe_estimado ) + $total_gastos + $adicional_aplicado, 2 );
+		$total_general = round( floatval( $importe_estimado ) + $total_gastos + floatval($adicional_aplicado), 2 );
 
 		?>
 		<div id="qvResumen" data-adicional-viaje-corto="<?php echo esc_attr($adicional_viaje_corto); ?>">
 			<p><strong>Origen:</strong> <?php echo esc_html($origen); ?></p>
 			<p><strong>Destino:</strong> <?php echo esc_html($destino); ?></p>
 
-			<!-- Hidden inputs para lat/lng -->
 			<div style="display:none" data-origen-lat="<?php echo esc_attr($origen_lat); ?>" data-origen-lng="<?php echo esc_attr($origen_lng); ?>" data-destino-lat="<?php echo esc_attr($destino_lat); ?>" data-destino-lng="<?php echo esc_attr($destino_lng); ?>">
 			</div>
 
-			<div style="display:none" data-importe-km="<?php echo esc_attr($importe_km); ?>">
+			<div style="display:none" id="qv-hidden-importe-meta" data-importe-km="<?php echo esc_attr($importe_km); ?>">
 			</div>
 
 			<input type="hidden" id="_qv_adicional_aplicado" value="<?php echo esc_attr($adicional_aplicado); ?>" />
@@ -580,10 +609,6 @@ class QV_Admin {
 
 			<hr>
 			<p class="qv-resumen-total"><strong>Total:</strong> $<?php echo esc_html( number_format( $total_general, 2 ) ); ?></p>
-
-			<?php /* echo '<pre style="max-height:500px;overflow:auto;">';
-			print_r( get_post_meta( $post->ID ) );
-			echo '</pre>' */ ?>
 		</div>
 		<?php
 	}
@@ -604,6 +629,8 @@ class QV_Admin {
 			update_post_meta( $post_id, '_qv_total_general', floatval( $_POST['qv_total_general'] ) );
 		}
 	}
+
+
 }
 
 add_action('save_post', function( $post_id ) {
@@ -675,4 +702,3 @@ add_action('save_post', function( $post_id ) {
 	update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
 
 }, 20, 1);
-
