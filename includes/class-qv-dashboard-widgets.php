@@ -230,33 +230,73 @@ class QV_Dashboard_Widgets {
 	 * Render del widget de línea de tiempo (gráfico de viajes por día).
 	 */
 	public function render_timeline_viajes() {
-		$dias = isset( $_GET['qv_dias'] ) ? max( 3, min( 90, intval( $_GET['qv_dias'] ) ) ) : 7;
-		$nonce = wp_create_nonce( 'qv_chart_viajes' );
+		$dias    = isset( $_GET['qv_dias'] ) ? max( 3, min( 90, intval( $_GET['qv_dias'] ) ) ) : 7;
+		$metrica = ( isset( $_GET['qv_metrica'] ) && $_GET['qv_metrica'] === 'ganancias' ) ? 'ganancias' : 'viajes';
+		$nonce   = wp_create_nonce( 'qv_chart_viajes' );
 		$ajaxurl = esc_url( admin_url( 'admin-ajax.php' ) );
 
-		$opciones = [ 7 => 'Últimos 7 días', 14 => 'Últimos 14 días', 30 => 'Últimos 30 días' ];
+		$opciones_dias = [ 7 => 'Últimos 7 días', 14 => 'Últimos 14 días', 30 => 'Últimos 30 días' ];
+		$opciones_met  = [ 'viajes' => 'Cantidad de viajes', 'ganancias' => 'Ganancias' ];
+		$color   = ( $metrica === 'ganancias' ) ? '#2e7d32' : '#1a73e8';
+		$nombre  = ( $metrica === 'ganancias' ) ? 'Ganancias' : 'Viajes';
+		$nota    = ( $metrica === 'ganancias' ) ? 'Ganancias de viajes finalizados por día.' : 'Cantidad de viajes por día.';
 		?>
 		<style>
-			.qv-timeline .qv-select { margin-bottom: 10px; width: 100%; max-width: 220px; }
+			.qv-timeline .qv-select-row { display: flex; gap: 8px; flex-wrap: wrap; }
+			.qv-timeline .qv-select { margin-bottom: 8px; width: auto; flex: 1 1 auto; max-width: 220px; }
 			.qv-timeline-sub { color: #727272; font-size: 12px; margin-top: 4px; }
+			.qv-leyenda-inline { display: flex; gap: 14px; font-size: 11px; color: #3c434a; margin-bottom: 6px; }
+			.qv-leyenda-inline .qv-ley { display: inline-flex; align-items: center; gap: 5px; }
+			.qv-leyenda-inline .qv-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 		</style>
 		<div class="qv-timeline">
-			<select id="qv-dias-select" class="qv-select">
-				<?php foreach ( $opciones as $valor => $etiqueta ) : ?>
-					<option value="<?php echo (int) $valor; ?>" <?php selected( $dias, $valor ); ?>><?php echo esc_html( $etiqueta ); ?></option>
-				<?php endforeach; ?>
-			</select>
-			<div id="qv-timeline-chart"><?php echo $this->svg_viajes( $dias ); // phpcs:ignore ?></div>
-			<p class="qv-timeline-sub">Viajes por día según fecha programada.</p>
+			<div class="qv-leyenda-inline"><span class="qv-ley"><span class="qv-dot" style="background:<?php echo esc_attr( $color ); ?>"></span><?php echo esc_html( $nombre ); ?></span></div>
+			<div class="qv-select-row">
+				<select id="qv-dias-select" class="qv-select" title="Período">
+					<?php foreach ( $opciones_dias as $valor => $etiqueta ) : ?>
+						<option value="<?php echo (int) $valor; ?>" <?php selected( $dias, $valor ); ?>><?php echo esc_html( $etiqueta ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<select id="qv-metrica-select" class="qv-select" title="Métrica">
+					<?php foreach ( $opciones_met as $valor => $etiqueta ) : ?>
+						<option value="<?php echo esc_attr( $valor ); ?>" <?php selected( $metrica, $valor ); ?>><?php echo esc_html( $etiqueta ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<div id="qv-timeline-chart"><?php echo $this->svg_viajes( $dias, $metrica ); // phpcs:ignore ?></div>
+			<p class="qv-timeline-sub"><?php echo esc_html( $nota ); ?> Según fecha programada. Pasá el mouse para ver el valor.</p>
 		</div>
 		<script>
 			window.qvDash = window.qvDash || { ajaxurl: <?php echo wp_json_encode( $ajaxurl ); ?>, nonce: <?php echo wp_json_encode( $nonce ); ?> };
 			jQuery(function($){
-				$('#qv-dias-select').on('change', function(){
-					$.post(qvDash.ajaxurl, { action: 'qv_chart_viajes', dias: $(this).val(), nonce: qvDash.nonce }, function(r){
-						if (r && r.success) { $('#qv-timeline-chart').html(r.data.svg); }
+				var $chart = $('#qv-timeline-chart');
+
+				// Redibujar al cambiar período o métrica
+				$('#qv-dias-select, #qv-metrica-select').on('change', function(){
+					$.post(qvDash.ajaxurl, {
+						action: 'qv_chart_viajes',
+						dias: $('#qv-dias-select').val(),
+						metrica: $('#qv-metrica-select').val(),
+						nonce: qvDash.nonce
+					}, function(r){
+						if (r && r.success) { $chart.html(r.data.svg); }
 					});
 				});
+
+				// Tooltip por delegación (soporta el redibujado AJAX)
+				$chart.on('mouseenter', '.qv-day', function(){
+					var el = this, svg = el.ownerSVGElement;
+					var x = parseFloat(el.getAttribute('data-x'));
+					$('#qv-tip-fecha').text(el.getAttribute('data-fecha'));
+					$('#qv-tip-valor').text(el.getAttribute('data-nombre') + ': ' + el.getAttribute('data-valor'));
+					var vb = svg.viewBox.baseVal, tipW = 120;
+					var tx = x - tipW / 2;
+					if (tx < 10) { tx = 10; }
+					if (tx + tipW > vb.width - 6) { tx = vb.width - tipW - 6; }
+					$('#qv-tip').attr('transform', 'translate(' + tx + ',6)').show();
+				});
+				$chart.on('mouseleave', '.qv-day', function(){ $('#qv-tip').hide(); });
+				$chart.on('mouseleave', function(){ $('#qv-tip').hide(); });
 			});
 		</script>
 		<?php
@@ -267,27 +307,30 @@ class QV_Dashboard_Widgets {
 	 */
 	public function ajax_chart_viajes() {
 		check_ajax_referer( 'qv_chart_viajes', 'nonce' );
-		$dias = isset( $_POST['dias'] ) ? max( 3, min( 90, intval( $_POST['dias'] ) ) ) : 7;
-		wp_send_json_success( [ 'svg' => $this->svg_viajes( $dias ) ] );
+		$dias    = isset( $_POST['dias'] ) ? max( 3, min( 90, intval( $_POST['dias'] ) ) ) : 7;
+		$metrica = ( isset( $_POST['metrica'] ) && $_POST['metrica'] === 'ganancias' ) ? 'ganancias' : 'viajes';
+		wp_send_json_success( [ 'svg' => $this->svg_viajes( $dias, $metrica ) ] );
 	}
 
 	/**
-	 * Genera un gráfico SVG de línea con los viajes por día de los últimos $dias días.
+	 * Genera un gráfico SVG de línea (viajes en azul o ganancias en verde) por día.
 	 *
-	 * @param int $dias
+	 * @param int    $dias
+	 * @param string $metrica 'viajes'|'ganancias'
 	 * @return string SVG.
 	 */
-	public function svg_viajes( $dias ) {
-		$dias = max( 3, min( 90, intval( $dias ) ) );
+	public function svg_viajes( $dias, $metrica = 'viajes' ) {
+		$dias    = max( 3, min( 90, intval( $dias ) ) );
+		$metrica = ( $metrica === 'ganancias' ) ? 'ganancias' : 'viajes';
 
 		$hoy    = current_time( 'Y-m-d' );
 		$inicio = date( 'Y-m-d', strtotime( '-' . ( $dias - 1 ) . ' days', current_time( 'timestamp' ) ) );
 
-		// Inicializar conteo por día
-		$conteos = [];
+		// Inicializar conteo y ganancias por día
+		$por_dia = [];
 		for ( $i = 0; $i < $dias; $i++ ) {
 			$fecha = date( 'Y-m-d', strtotime( '-' . $i . ' days', current_time( 'timestamp' ) ) );
-			$conteos[ $fecha ] = 0;
+			$por_dia[ $fecha ] = [ 'c' => 0, 'g' => 0.0 ];
 		}
 
 		// Viajes del período según fecha programada (_qv_fecha)
@@ -303,39 +346,65 @@ class QV_Dashboard_Widgets {
 
 		foreach ( get_posts( $args ) as $id ) {
 			$f = get_post_meta( $id, '_qv_fecha', true );
-			if ( isset( $conteos[ $f ] ) ) {
-				$conteos[ $f ]++;
+			if ( isset( $por_dia[ $f ] ) ) {
+				$por_dia[ $f ]['c']++;
+
+				// Ganancias: solo viajes finalizados (mismo criterio que el resumen)
+				if ( get_post_meta( $id, '_qv_estado', true ) === 'finalizado' ) {
+					$importe = get_post_meta( $id, '_qv_total_general', true );
+					if ( $importe === '' ) {
+						$importe = get_post_meta( $id, '_qv_importe_total', true );
+					}
+					$por_dia[ $f ]['g'] += floatval( $importe );
+				}
 			}
 		}
 
-		ksort( $conteos );
-		$valores = array_values( $conteos );
-		$fechas  = array_keys( $conteos );
-		$max     = max( 1, max( $valores ) );
-		$n       = count( $valores );
+		ksort( $por_dia );
+		$fechas  = array_keys( $por_dia );
+		$conteos = array_values( array_column( $por_dia, 'c' ) );
+		$ganan   = array_values( array_column( $por_dia, 'g' ) );
+		$n       = count( $fechas );
 
+		// Serie activa
+		$valores = ( $metrica === 'ganancias' ) ? $ganan : $conteos;
+		$max     = max( 1, max( $valores ) );
+		$color   = ( $metrica === 'ganancias' ) ? '#2e7d32' : '#1a73e8';
+		$nombre  = ( $metrica === 'ganancias' ) ? 'Ganancias' : 'Viajes';
+
+		// Layout con un eje vertical simple
 		$W = 560;
-		$H = 185;
-		$pad   = 22;
-		$innerW = $W - ( $pad * 2 );
-		$innerH = $H - ( $pad * 2 );
+		$H = 200;
+		$padL   = 34;
+		$padR   = 16;
+		$padT   = 18;
+		$padB   = 26;
+		$innerW = $W - $padL - $padR;
+		$innerH = $H - $padT - $padB;
 		$step   = $n > 1 ? ( $innerW / ( $n - 1 ) ) : 0;
 
-		// Puntos y línea
-		$pt   = '';
-		$dots = '';
-		foreach ( $valores as $i => $v ) {
-			$x = $pad + ( $i * $step );
-			$y = $pad + $innerH - ( ( $v / $max ) * $innerH );
-			$pt .= ( $i ? ' ' : '' ) . round( $x ) . ',' . round( $y );
-			$dots .= '<circle cx="' . round( $x ) . '" cy="' . round( $y ) . '" r="3.5" fill="#c14242"/>';
+		$xf = function ( $i ) use ( $padL, $step ) { return $padL + ( $i * $step ); };
+		$yf = function ( $v ) use ( $padT, $innerH, $max ) { return $padT + $innerH - ( ( $v / $max ) * $innerH ); };
+
+		// Líneas de referencia y etiquetas del eje
+		$grid = '';
+		$ylab = '';
+		for ( $g = 0; $g <= 4; $g++ ) {
+			$fr = $g / 4;
+			$gy = $padT + ( $innerH * $fr );
+			$grid .= '<line x1="' . $padL . '" y1="' . round( $gy ) . '" x2="' . ( $W - $padR ) . '" y2="' . round( $gy ) . '" stroke="#eef0f2" stroke-width="1"/>';
+			$ejeval = ( $metrica === 'ganancias' ) ? number_format( round( $max * $fr ), 0, ',', '.' ) : round( $max * $fr );
+			$ylab .= '<text x="' . ( $padL - 5 ) . '" y="' . round( $gy + 3 ) . '" fill="#8a8f98" font-size="9" text-anchor="end" pointer-events="none">' . $ejeval . '</text>';
 		}
 
-		// Líneas de referencia horizontales
-		$grid = '';
-		for ( $g = 0; $g <= 4; $g++ ) {
-			$gy = $pad + ( $innerH * ( $g / 4 ) );
-			$grid .= '<line x1="' . $pad . '" y1="' . round( $gy ) . '" x2="' . ( $W - $pad ) . '" y2="' . round( $gy ) . '" stroke="#eee" stroke-width="1"/>';
+		// Línea y puntos
+		$pt = '';
+		$dots = '';
+		for ( $i = 0; $i < $n; $i++ ) {
+			$x = round( $xf( $i ) );
+			$y = round( $yf( $valores[ $i ] ) );
+			$pt .= ( $i ? ' ' : '' ) . $x . ',' . $y;
+			$dots .= '<circle cx="' . $x . '" cy="' . $y . '" r="3.5" fill="' . $color . '" pointer-events="none"/>';
 		}
 
 		// Etiquetas del eje X (máx ~8)
@@ -345,16 +414,35 @@ class QV_Dashboard_Widgets {
 			if ( $i % $label_step !== 0 && $i !== $n - 1 ) {
 				continue;
 			}
-			$x = $pad + ( $i * $step );
-			$f = date_i18n( 'd/m', strtotime( $fechas[ $i ] ) );
-			$labels .= '<text x="' . round( $x ) . '" y="' . ( $H - 4 ) . '" fill="#727272" font-size="10" text-anchor="middle">' . esc_html( $f ) . '</text>';
+			$labels .= '<text x="' . round( $xf( $i ) ) . '" y="' . ( $H - 6 ) . '" fill="#727272" font-size="10" text-anchor="middle" pointer-events="none">' . esc_html( date_i18n( 'd/m', strtotime( $fechas[ $i ] ) ) ) . '</text>';
 		}
 
-		return '<svg viewBox="0 0 ' . $W . ' ' . $H . '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:200px;">'
-			. $grid
-			. '<polyline points="' . $pt . '" fill="none" stroke="#c14242" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+		// Regiones de hover por día (para el tooltip)
+		$hover = '';
+		for ( $i = 0; $i < $n; $i++ ) {
+			$x = $xf( $i );
+			$w = max( 6, $step * 0.95 );
+			$rxl = min( max( $x - ( $w / 2 ), $padL ), ( $W - $padR ) - $w );
+			$val = ( $metrica === 'ganancias' ) ? number_format( round( $valores[ $i ] ), 0, ',', '.' ) : round( $valores[ $i ] );
+			$hover .= '<rect class="qv-day" x="' . round( $rxl ) . '" y="' . $padT . '" width="' . round( $w ) . '" height="' . round( $innerH ) . '" fill="transparent"'
+				. ' data-x="' . round( $x ) . '" data-fecha="' . esc_attr( date_i18n( 'd/m/Y', strtotime( $fechas[ $i ] ) ) ) . '"'
+				. ' data-nombre="' . esc_attr( $nombre ) . '" data-valor="' . $val . '"/>';
+		}
+
+		// Tooltip (oculto hasta el hover)
+		$tip = '<g id="qv-tip" style="display:none">'
+			. '<rect x="0" y="0" width="120" height="34" rx="5" fill="#1d2327" opacity="0.94"/>'
+			. '<text id="qv-tip-fecha" x="7" y="14" fill="#fff" font-size="10" font-weight="bold"></text>'
+			. '<text id="qv-tip-valor" x="7" y="28" fill="#cfd8dc" font-size="10"></text>'
+			. '</g>';
+
+		return '<svg viewBox="0 0 ' . $W . ' ' . $H . '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:200px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">'
+			. $grid . $ylab
+			. '<polyline points="' . $pt . '" fill="none" stroke="' . $color . '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>'
 			. $dots
 			. $labels
+			. $hover
+			. $tip
 			. '</svg>';
 	}
 
