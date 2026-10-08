@@ -702,4 +702,36 @@ add_action('save_post', function( $post_id ) {
 	/* Guardar resultado */
 	update_post_meta($post_id, '_qv_adicional_aplicado', $adicional_aplicado);
 
+	/* 3) RECALCULAR Y GUARDAR EL IMPORTE TOTAL GENERAL */
+	/* Respaldo en servidor por si el JS no fijó el campo oculto al publicar. */
+
+	/* Importe base = distancia x importe/km (guardado por el JS en _qv_importe) */
+	$importe_base = floatval( get_post_meta($post_id, '_qv_importe', true) );
+	if ( $importe_base <= 0 && $distancia > 0 ) {
+		$importe_km = get_post_meta( $post_id, '_qv_importe_km', true );
+		if ( empty( $importe_km ) ) {
+			$empresa_id = get_post_meta( $post_id, '_qv_empresa', true );
+			$importe_km = $empresa_id ? get_user_meta( $empresa_id, 'importe_km_empresa', true ) : '';
+		}
+		if ( empty( $importe_km ) ) {
+			$importe_km = get_option( 'qv_importe_km_general', 0 );
+		}
+		$importe_base = ceil( $distancia * floatval( $importe_km ) );
+	}
+
+	/* Gastos extra */
+	$gastos_extra = get_post_meta( $post_id, '_gastos_extra', true );
+	$total_gastos = 0.0;
+	if ( is_array( $gastos_extra ) ) {
+		foreach ( $gastos_extra as $gasto ) {
+			if ( isset( $gasto['importe'] ) && $gasto['importe'] !== '' ) {
+				$total_gastos += floatval( $gasto['importe'] );
+			}
+		}
+	}
+
+	/* Total general, con el mismo redondeo hacia arriba que usa el JS */
+	$total_general = ceil( $importe_base + ceil( $total_gastos ) + floatval( $adicional_aplicado ) );
+	update_post_meta( $post_id, '_qv_total_general', $total_general );
+
 }, 20, 1);

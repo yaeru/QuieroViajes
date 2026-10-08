@@ -220,8 +220,11 @@ function calcularResumen() {
 			/* Actualizar hidden inputs para guardar en la base de datos */
 			const distanciaInput = document.getElementById("qv_distancia_input");
 			const importeInputHidden = document.getElementById("qv_importe_input");
+			const totalGeneralInput = document.querySelector('input[name="qv_total_general"]');
 			if (distanciaInput) distanciaInput.value = distanciaKm.toFixed(2);
 			if (importeInputHidden) importeInputHidden.value = importeBase;
+			/* Fijar el total general para que se guarde de una al publicar/actualizar */
+			if (totalGeneralInput) totalGeneralInput.value = totalGeneral;
 
 		} else {
 			console.error("Error en DistanceMatrix:", status);
