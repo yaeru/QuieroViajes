@@ -53,6 +53,7 @@ function qvTrazoMapa() {
     const origenPos = new google.maps.LatLng(origenLat, origenLng);
     const destinoPos = new google.maps.LatLng(destinoLat, destinoLng);
 
+    // Crear marcadores clásicos con etiquetas A/B
     const markerOrigen = new google.maps.Marker({
         position: origenPos,
         map,
