@@ -11,6 +11,7 @@ class QV_Dashboard_Widgets {
 
 	public function __construct() {
 		add_action( 'wp_dashboard_setup', [ $this, 'registrar_widgets' ] );
+		add_action( 'wp_ajax_qv_chart_viajes', [ $this, 'ajax_chart_viajes' ] );
 	}
 
 	/**
@@ -31,6 +32,12 @@ class QV_Dashboard_Widgets {
 			'qv_top_empresas',
 			'Quiero Viajes — Top 5 empresas',
 			[ $this, 'render_top_empresas' ]
+		);
+
+		wp_add_dashboard_widget(
+			'qv_timeline_viajes',
+			'Quiero Viajes — Viajes en el tiempo',
+			[ $this, 'render_timeline_viajes' ]
 		);
 	}
 
@@ -217,6 +224,138 @@ class QV_Dashboard_Widgets {
 			</tbody>
 		</table>
 		<?php
+	}
+
+	/**
+	 * Render del widget de línea de tiempo (gráfico de viajes por día).
+	 */
+	public function render_timeline_viajes() {
+		$dias = isset( $_GET['qv_dias'] ) ? max( 3, min( 90, intval( $_GET['qv_dias'] ) ) ) : 7;
+		$nonce = wp_create_nonce( 'qv_chart_viajes' );
+		$ajaxurl = esc_url( admin_url( 'admin-ajax.php' ) );
+
+		$opciones = [ 7 => 'Últimos 7 días', 14 => 'Últimos 14 días', 30 => 'Últimos 30 días' ];
+		?>
+		<style>
+			.qv-timeline .qv-select { margin-bottom: 10px; width: 100%; max-width: 220px; }
+			.qv-timeline-sub { color: #727272; font-size: 12px; margin-top: 4px; }
+		</style>
+		<div class="qv-timeline">
+			<select id="qv-dias-select" class="qv-select">
+				<?php foreach ( $opciones as $valor => $etiqueta ) : ?>
+					<option value="<?php echo (int) $valor; ?>" <?php selected( $dias, $valor ); ?>><?php echo esc_html( $etiqueta ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<div id="qv-timeline-chart"><?php echo $this->svg_viajes( $dias ); // phpcs:ignore ?></div>
+			<p class="qv-timeline-sub">Viajes por día según fecha programada.</p>
+		</div>
+		<script>
+			window.qvDash = window.qvDash || { ajaxurl: <?php echo wp_json_encode( $ajaxurl ); ?>, nonce: <?php echo wp_json_encode( $nonce ); ?> };
+			jQuery(function($){
+				$('#qv-dias-select').on('change', function(){
+					$.post(qvDash.ajaxurl, { action: 'qv_chart_viajes', dias: $(this).val(), nonce: qvDash.nonce }, function(r){
+						if (r && r.success) { $('#qv-timeline-chart').html(r.data.svg); }
+					});
+				});
+			});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Respuesta AJAX para redibujar el gráfico según los días elegidos.
+	 */
+	public function ajax_chart_viajes() {
+		check_ajax_referer( 'qv_chart_viajes', 'nonce' );
+		$dias = isset( $_POST['dias'] ) ? max( 3, min( 90, intval( $_POST['dias'] ) ) ) : 7;
+		wp_send_json_success( [ 'svg' => $this->svg_viajes( $dias ) ] );
+	}
+
+	/**
+	 * Genera un gráfico SVG de línea con los viajes por día de los últimos $dias días.
+	 *
+	 * @param int $dias
+	 * @return string SVG.
+	 */
+	public function svg_viajes( $dias ) {
+		$dias = max( 3, min( 90, intval( $dias ) ) );
+
+		$hoy    = current_time( 'Y-m-d' );
+		$inicio = date( 'Y-m-d', strtotime( '-' . ( $dias - 1 ) . ' days', current_time( 'timestamp' ) ) );
+
+		// Inicializar conteo por día
+		$conteos = [];
+		for ( $i = 0; $i < $dias; $i++ ) {
+			$fecha = date( 'Y-m-d', strtotime( '-' . $i . ' days', current_time( 'timestamp' ) ) );
+			$conteos[ $fecha ] = 0;
+		}
+
+		// Viajes del período según fecha programada (_qv_fecha)
+		$args = [
+			'post_type'      => 'viaje',
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => [
+				[ 'key' => '_qv_fecha', 'value' => [ $inicio, $hoy ], 'compare' => 'BETWEEN', 'type' => 'DATE' ],
+			],
+		];
+
+		foreach ( get_posts( $args ) as $id ) {
+			$f = get_post_meta( $id, '_qv_fecha', true );
+			if ( isset( $conteos[ $f ] ) ) {
+				$conteos[ $f ]++;
+			}
+		}
+
+		ksort( $conteos );
+		$valores = array_values( $conteos );
+		$fechas  = array_keys( $conteos );
+		$max     = max( 1, max( $valores ) );
+		$n       = count( $valores );
+
+		$W = 560;
+		$H = 185;
+		$pad   = 22;
+		$innerW = $W - ( $pad * 2 );
+		$innerH = $H - ( $pad * 2 );
+		$step   = $n > 1 ? ( $innerW / ( $n - 1 ) ) : 0;
+
+		// Puntos y línea
+		$pt   = '';
+		$dots = '';
+		foreach ( $valores as $i => $v ) {
+			$x = $pad + ( $i * $step );
+			$y = $pad + $innerH - ( ( $v / $max ) * $innerH );
+			$pt .= ( $i ? ' ' : '' ) . round( $x ) . ',' . round( $y );
+			$dots .= '<circle cx="' . round( $x ) . '" cy="' . round( $y ) . '" r="3.5" fill="#c14242"/>';
+		}
+
+		// Líneas de referencia horizontales
+		$grid = '';
+		for ( $g = 0; $g <= 4; $g++ ) {
+			$gy = $pad + ( $innerH * ( $g / 4 ) );
+			$grid .= '<line x1="' . $pad . '" y1="' . round( $gy ) . '" x2="' . ( $W - $pad ) . '" y2="' . round( $gy ) . '" stroke="#eee" stroke-width="1"/>';
+		}
+
+		// Etiquetas del eje X (máx ~8)
+		$label_step = max( 1, (int) ceil( $n / 8 ) );
+		$labels = '';
+		for ( $i = 0; $i < $n; $i++ ) {
+			if ( $i % $label_step !== 0 && $i !== $n - 1 ) {
+				continue;
+			}
+			$x = $pad + ( $i * $step );
+			$f = date_i18n( 'd/m', strtotime( $fechas[ $i ] ) );
+			$labels .= '<text x="' . round( $x ) . '" y="' . ( $H - 4 ) . '" fill="#727272" font-size="10" text-anchor="middle">' . esc_html( $f ) . '</text>';
+		}
+
+		return '<svg viewBox="0 0 ' . $W . ' ' . $H . '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:200px;">'
+			. $grid
+			. '<polyline points="' . $pt . '" fill="none" stroke="#c14242" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+			. $dots
+			. $labels
+			. '</svg>';
 	}
 
 	/**
