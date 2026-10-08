@@ -148,6 +148,10 @@ class QV_Admin {
 				$importe_km = get_option( 'qv_importe_km_general', '' ); 
 			}
 		}
+
+		// TARIFA PLANA (importe fijo al viaje)
+		$tarifa_plana       = get_post_meta( $post->ID, '_qv_tarifa_plana', true );
+		$tarifa_plana_monto = get_post_meta( $post->ID, '_qv_tarifa_plana_monto', true );
 		?>
 		<table class="form-table qv-metabox">
 			<tbody>
@@ -181,12 +185,33 @@ class QV_Admin {
 						$readonly = $is_admin ? '' : 'readonly';
 						?>
 						
-						<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>" <?php echo $readonly; ?>>
+						<input type="number" id="qv_importe_km" step="0.01" name="qv_importe_km" value="<?php echo esc_attr( $importe_km ); ?>" <?php echo $readonly; ?> <?php echo $tarifa_plana ? 'disabled' : ''; ?>>
 						<?php if (!$is_admin): ?>
 							<p style="font-size:11px;color:#666;margin-top:4px;">
 								Este valor sólo puede ser modificado por administradores.
 							</p>
 						<?php endif; ?>
+					</td>
+				</tr>
+
+				<tr id="qvTarifaPlana">
+					<th>
+						<label>Tarifa plana:</label>
+					</th>
+					<td>
+						<label style="display:block;margin-bottom:6px;">
+							<input type="checkbox" id="qv_tarifa_plana" name="qv_tarifa_plana" value="1" <?php echo checked( $tarifa_plana, '1', false ); ?>>
+							Activar tarifa plana (desactiva el importe por km)
+						</label>
+						<input type="number" id="qv_tarifa_plana_monto" name="qv_tarifa_plana_monto"
+							step="0.01" min="0"
+							value="<?php echo esc_attr( $tarifa_plana_monto ); ?>"
+							placeholder="Importe fijo del viaje ($)"
+							style="max-width:220px;"
+							<?php echo $tarifa_plana ? '' : 'disabled'; ?>>
+						<p style="font-size:11px;color:#666;margin-top:4px;">
+							Al activarla se usa este importe fijo y se ignora el cálculo por distancia.
+						</p>
 					</td>
 				</tr>
 
@@ -213,6 +238,7 @@ class QV_Admin {
 			'qv_destino_lat' => '_qv_destino_lat',
 			'qv_destino_lng' => '_qv_destino_lng',
 			'qv_importe_km'    => '_qv_importe_km',
+			'qv_tarifa_plana_monto' => '_qv_tarifa_plana_monto',
 		];
 
 		foreach ( $fields as $form_field => $meta_key ) {
@@ -220,6 +246,9 @@ class QV_Admin {
 				update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[$form_field] ) );
 			}
 		}
+
+		/* Tarifa plana: el checkbox puede venir desmarcado (no llega en POST) */
+		update_post_meta( $post_id, '_qv_tarifa_plana', empty( $_POST['qv_tarifa_plana'] ) ? '' : '1' );
 	}
 
 	/* Metabox Detalles del Viaje */
@@ -470,30 +499,6 @@ class QV_Admin {
 		</table>
 
 		<p><button type="button" class="button" id="add-gasto-extra">+ Añadir otro gasto</button></p>
-
-		<script>
-			document.addEventListener('DOMContentLoaded', () => {
-				const tableBody = document.querySelector('#qvGastosExtraTable tbody');
-				const addButton = document.querySelector('#add-gasto-extra');
-
-				addButton.addEventListener('click', () => {
-					const index = tableBody.querySelectorAll('tr').length;
-					const newRow = document.createElement('tr');
-					newRow.innerHTML = `
-				<td><input type="text" name="gastos_extra[${index}][descripcion]" value="" /></td>
-				<td><input type="number" step="0.01" name="gastos_extra[${index}][importe]" value="" /></td>
-				<td><button type="button" class="remove-row">🗑️</button></td>
-					`;
-					tableBody.appendChild(newRow);
-				});
-
-				tableBody.addEventListener('click', e => {
-					if (e.target.classList.contains('remove-row')) {
-						e.target.closest('tr').remove();
-					}
-				});
-			});
-		</script>
 		<?php
 	}
 
@@ -567,7 +572,16 @@ class QV_Admin {
 			}
 		}
 		$adicional_aplicado = get_post_meta( $post->ID, '_qv_adicional_aplicado', true );
-		$total_general = round( floatval( $importe_estimado ) + $total_gastos + floatval($adicional_aplicado), 2 );
+
+		/* Tarifa plana: si está activa, el total es el importe fijo + gastos extra */
+		$tarifa_plana       = get_post_meta( $post->ID, '_qv_tarifa_plana', true );
+		$tarifa_plana_monto = get_post_meta( $post->ID, '_qv_tarifa_plana_monto', true );
+
+		if ( $tarifa_plana ) {
+			$total_general = round( floatval( $tarifa_plana_monto ) + $total_gastos, 2 );
+		} else {
+			$total_general = round( floatval( $importe_estimado ) + $total_gastos + floatval($adicional_aplicado), 2 );
+		}
 
 		?>
 		<div id="qvResumen" data-adicional-viaje-corto="<?php echo esc_attr($adicional_viaje_corto); ?>">
@@ -705,8 +719,28 @@ add_action('save_post', function( $post_id ) {
 	/* 3) RECALCULAR Y GUARDAR EL IMPORTE TOTAL GENERAL */
 	/* Respaldo en servidor por si el JS no fijó el campo oculto al publicar. */
 
-	/* Importe base = distancia x importe/km (guardado por el JS en _qv_importe) */
-	$importe_base = floatval( get_post_meta($post_id, '_qv_importe', true) );
+	/* Tarifa plana: total = importe fijo + gastos extra (sin importe por km ni adicional) */
+	$tarifa_plana = get_post_meta( $post_id, '_qv_tarifa_plana', true );
+
+	if ( $tarifa_plana ) {
+		$monto_fijo = floatval( get_post_meta( $post_id, '_qv_tarifa_plana_monto', true ) );
+
+		/* Gastos extra */
+		$gastos_extra = get_post_meta( $post_id, '_gastos_extra', true );
+		$total_gastos = 0.0;
+		if ( is_array( $gastos_extra ) ) {
+			foreach ( $gastos_extra as $gasto ) {
+				if ( isset( $gasto['importe'] ) && $gasto['importe'] !== '' ) {
+					$total_gastos += floatval( $gasto['importe'] );
+				}
+			}
+		}
+
+		$total_general = ceil( $monto_fijo + ceil( $total_gastos ) );
+		update_post_meta( $post_id, '_qv_total_general', $total_general );
+	} else {
+		/* Importe base = distancia x importe/km (guardado por el JS en _qv_importe) */
+		$importe_base = floatval( get_post_meta($post_id, '_qv_importe', true) );
 	if ( $importe_base <= 0 && $distancia > 0 ) {
 		$importe_km = get_post_meta( $post_id, '_qv_importe_km', true );
 		if ( empty( $importe_km ) ) {
@@ -733,5 +767,6 @@ add_action('save_post', function( $post_id ) {
 	/* Total general, con el mismo redondeo hacia arriba que usa el JS */
 	$total_general = ceil( $importe_base + ceil( $total_gastos ) + floatval( $adicional_aplicado ) );
 	update_post_meta( $post_id, '_qv_total_general', $total_general );
+	}
 
 }, 20, 1);

@@ -19,6 +19,23 @@
 	margin-bottom: 0;
 }
 
+/* Los checkboxes no deben estirarse a lo ancho */
+.qv-metabox input[type="checkbox"] {
+	width: auto;
+	flex: 0 0 auto;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+
+#qvTarifaPlana label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	width: auto;
+	max-width: 100%;
+	line-height: 1.4;
+}
+
 #qvGastosExtraTable {
 	border: 0;
 	input[type="text"] {

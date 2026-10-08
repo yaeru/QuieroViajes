@@ -14,11 +14,56 @@ jQuery(function($){
 		if (el) el.addEventListener("change", calcularResumen);
 	});
 
+	// TARIFA PLANA: al activarla se deshabilita el importe por km
+	const tarifaPlanaCheck = document.getElementById("qv_tarifa_plana");
+	const tarifaPlanaMonto = document.getElementById("qv_tarifa_plana_monto");
+	if (tarifaPlanaCheck) {
+		const actualizarEstadoTarifaPlana = function(){
+			const activa = tarifaPlanaCheck.checked;
+			const importeKmEl = document.getElementById("qv_importe_km");
+			if (importeKmEl) importeKmEl.disabled = activa;
+			if (tarifaPlanaMonto) tarifaPlanaMonto.disabled = !activa;
+		};
+		tarifaPlanaCheck.addEventListener("change", function(){
+			actualizarEstadoTarifaPlana();
+			calcularResumen();
+		});
+		if (tarifaPlanaMonto) tarifaPlanaMonto.addEventListener("input", calcularResumen);
+		// Aplicar el estado guardado al cargar (p. ej. al reabrir un viaje ya tildado)
+		actualizarEstadoTarifaPlana();
+	}
+
 	// Escuchar cambios dinámicos en la tabla de gastos extra
 	document.body.addEventListener("input", e => {
 		if (e.target.name && e.target.name.includes("gastos_extra")) {
 			calcularResumen();
 		}
+	});
+
+	// GASTOS EXTRA: añadir y eliminar filas (delegación en document, funciona siempre)
+	$(document).on('click', '#add-gasto-extra', function(){
+		const $tbody = $('#qvGastosExtraTable tbody');
+		if (!$tbody.length) return;
+		const index = $tbody.find('tr').length;
+		$tbody.append(
+			'<tr>' +
+			'<td><input type="text" name="gastos_extra[' + index + '][descripcion]" value="" /></td>' +
+			'<td><input type="number" step="0.01" name="gastos_extra[' + index + '][importe]" value="" /></td>' +
+			'<td><button type="button" class="remove-row">🗑️</button></td>' +
+			'</tr>'
+		);
+		calcularResumen();
+	});
+
+	$(document).on('click', '.remove-row', function(){
+		$(this).closest('tr').remove();
+		// Renumerar índices para que el guardado quede limpio y sin colisiones
+		$('#qvGastosExtraTable tbody tr').each(function(i){
+			$(this).find('input').attr('name', function(){
+				return this.name.replace(/gastos_extra\[\d+\]/, 'gastos_extra[' + i + ']');
+			});
+		});
+		calcularResumen();
 	});
 
 	// ---------------------------------------------------
@@ -127,6 +172,46 @@ function initAutocomplete() {
 }
 
 function calcularResumen() {
+	// TARIFA PLANA: importe fijo, ignora distancia e importe por km
+	const tarifaPlanaCheck = document.getElementById("qv_tarifa_plana");
+	const tarifaPlanaMonto = document.getElementById("qv_tarifa_plana_monto");
+
+	if (tarifaPlanaCheck && tarifaPlanaCheck.checked) {
+		const monto = parseFloat(String(tarifaPlanaMonto ? tarifaPlanaMonto.value : '').replace(',', '.'));
+		const montoValido = !isNaN(monto) && monto > 0;
+
+		/* Gastos extra (siguen funcionando de forma normal) */
+		let gastosExtras = 0;
+		document.querySelectorAll('#qvGastosExtraTable input[name*="[importe]"]').forEach(input => {
+			const valor = parseFloat(String(input.value).replace(',', '.'));
+			if (!isNaN(valor)) gastosExtras += valor;
+		});
+		gastosExtras = Math.ceil(gastosExtras);
+
+		const base = montoValido ? monto : 0;
+		const totalGeneral = Math.ceil(base + gastosExtras);
+
+		/* Visuales */
+		const totalContainer = document.querySelector(".qv-resumen-total");
+		if (totalContainer) totalContainer.innerHTML = `<strong>Total:</strong> $${totalGeneral.toLocaleString('es-AR')}`;
+
+		const importeEstimadoSpan = document.getElementById("qv-importe");
+		if (importeEstimadoSpan) importeEstimadoSpan.textContent = montoValido ? monto.toLocaleString('es-AR') : '0';
+
+		const adicionalElemento = document.getElementById("qv-adicional");
+		if (adicionalElemento) adicionalElemento.style.display = "none";
+
+		const distanciaSpan = document.getElementById("qv-distancia");
+		if (distanciaSpan) distanciaSpan.textContent = "Tarifa plana";
+
+		/* Hidden inputs */
+		const importeInputHidden = document.getElementById("qv_importe_input");
+		const totalGeneralInput = document.querySelector('input[name="qv_total_general"]');
+		if (importeInputHidden) importeInputHidden.value = base;
+		if (totalGeneralInput) totalGeneralInput.value = totalGeneral;
+		return;
+	}
+
 	const origen = document.getElementById("qv_origen")?.value;
 	const destino = document.getElementById("qv_destino")?.value;
 	const importeKmInput = document.querySelector('input[name="qv_importe_km"]');
