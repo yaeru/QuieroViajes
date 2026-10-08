@@ -1,12 +1,7 @@
 jQuery(function($){
 
 	// Inicialización del sistema al cargar la página
-	if (typeof google !== "undefined" && google.maps && google.maps.places) {
-		initAutocomplete();
-		calcularResumen(); // Calcular al cargar si ya hay datos previos
-	} else {
-		console.error("Google Maps API no cargó correctamente.");
-	}
+	qvEsperarMapasAdmin();
 
 	// Registrar listeners globales para cambios en inputs clave
 	["qv_origen", "qv_destino", "qv_importe_km"].forEach(id => {
@@ -133,6 +128,22 @@ jQuery(function($){
 // ---------------------------------------------------
 // FUNCIONES GLOBALES (Mantienen Vanilla JS independiente)
 // ---------------------------------------------------
+
+// Espera a que Google Maps esté disponible y recién ahí inicializa autocompletado y cálculo
+function qvIniciarMapasAdmin() {
+	if (typeof google !== "undefined" && google.maps && google.maps.places) {
+		initAutocomplete();
+		calcularResumen(); // Calcular al cargar si ya hay datos previos
+		return true;
+	}
+	return false;
+}
+
+function qvEsperarMapasAdmin() {
+	if (qvIniciarMapasAdmin()) return;
+	// Reintentar hasta que la API asíncrona termine de cargar
+	setTimeout(qvEsperarMapasAdmin, 150);
+}
 
 function initAutocomplete() {
 	const origenInput = document.getElementById("qv_origen");

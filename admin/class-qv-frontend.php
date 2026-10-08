@@ -7,7 +7,7 @@ add_action('wp_enqueue_scripts', function() {
         // Cargar Google Maps API
         wp_enqueue_script(
             'google-maps',
-            'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( get_option('qv_google_maps_api_key') ) . '&libraries=places',
+            'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( get_option('qv_google_maps_api_key') ) . '&libraries=places&loading=async&callback=qvGmapsCallback',
             [],
             null,
             true
@@ -19,7 +19,7 @@ add_action('wp_enqueue_scripts', function() {
             //plugin_dir_url(__FILE__) . '/../assets/js/qv-map.js',
             QV_URL . 'assets/js/qv-map.js',
             ['google-maps'],
-            '1.0.0',
+            filemtime( QV_PATH . 'assets/js/qv-map.js' ),
             true
         );
     }

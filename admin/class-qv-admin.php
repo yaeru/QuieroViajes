@@ -28,7 +28,7 @@ class QV_Admin {
 
 				wp_enqueue_script(
 					'google-maps',
-					'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( get_option('qv_google_maps_api_key') ) . '&libraries=places',
+					'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( get_option('qv_google_maps_api_key') ) . '&libraries=places&loading=async',
 					[],
 					null,
 					true
@@ -38,7 +38,7 @@ class QV_Admin {
 					'qv-admin',
 					QV_URL . 'assets/js/qv-admin.js',
 					[],
-					'1.0',
+					filemtime( QV_PATH . 'assets/js/qv-admin.js' ),
 					true
 				);
 			}

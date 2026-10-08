@@ -1,4 +1,34 @@
+// Espera a que Google Maps esté COMPLETAMENTE cargado (carga asíncrona)
+let qvMapaIniciado = false;
+
+function qvMapaListo() {
+    return typeof google !== "undefined" && google.maps && google.maps.LatLngBounds && google.maps.Map;
+}
+
+function qvIniciarMapa() {
+    if (qvMapaIniciado) return false;
+    if (!qvMapaListo()) return false;
+    qvMapaIniciado = true;
+    qvTrazoMapa();
+    return true;
+}
+
+// Callback que Google Maps invoca cuando la API terminó de inicializar (loading=async&callback=qvGmapsCallback)
+window.qvGmapsCallback = qvIniciarMapa;
+
 document.addEventListener("DOMContentLoaded", function() {
+    qvIniciarMapa();
+    // Respaldo por si el callback asíncrono aún no se disparó
+    let intentos = 0;
+    const intervalo = setInterval(function(){
+        if (qvIniciarMapa() || intentos++ > 30) {
+            clearInterval(intervalo);
+        }
+    }, 200);
+});
+
+// Trazado del mapa (se ejecuta cuando Google Maps está disponible)
+function qvTrazoMapa() {
     const mapContainer = document.getElementById("qvChipMap");
     if (!mapContainer) return;
 
@@ -10,11 +40,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (!origenLat || !origenLng || !destinoLat || !destinoLng) {
         console.warn("Faltan coordenadas para mostrar el mapa del viaje.");
-        return;
-    }
-
-    if (typeof google === "undefined" || !google.maps) {
-        console.error("Google Maps API no está cargada.");
         return;
     }
 
@@ -68,4 +93,5 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
     );
-});
+}
+
