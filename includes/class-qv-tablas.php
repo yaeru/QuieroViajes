@@ -242,15 +242,17 @@ class QV_Tablas {
 new QV_Tablas();
 
 //// EXPORTAR VIAJES ////
-// Función para generar el archivo CSV y forzar su descarga
-function remiseria_download_viajes_csv() {
-	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
-		return;
-	}
 
+/**
+ * Construye y ejecuta la query de viajes para exportar, respetando
+ * TODOS los filtros activos de la URL (empresa, estado, pago y mes).
+ *
+ * @return array Lista de objetos WP_Post.
+ */
+function remiseria_get_viajes_export() {
 	$meta_query = array();
 
-    // Aplicar filtros activos desde la URL (GET)
+	// Aplicar filtros activos desde la URL (GET)
 	if ( ! empty( $_GET['filtro_empresa'] ) ) {
 		$meta_query[] = array(
 			'key'     => '_qv_empresa',
@@ -275,40 +277,49 @@ function remiseria_download_viajes_csv() {
 		);
 	}
 
-    // Base de la query
+	// Base de la query
 	$args = array(
 		'post_type'      => 'viaje',
 		'posts_per_page' => -1,
 		'post_status'    => 'any'
 	);
 
-	if ( ! empty( $meta_query ) ) {
-		$args['meta_query'] = $meta_query;
+	// Filtro por mes (dropdown de fechas de WordPress: p. ej. 202506)
+	$mes_seleccionado = isset( $_GET['m'] ) ? preg_replace( '/[^0-9]/', '', $_GET['m'] ) : '';
+	if ( $mes_seleccionado !== '' && strlen( $mes_seleccionado ) >= 6 ) {
+		$args['date_query'] = array(
+			array(
+				'year'  => (int) substr( $mes_seleccionado, 0, 4 ),
+				'month' => (int) substr( $mes_seleccionado, 4, 2 ),
+			)
+		);
 	}
 
-    // Si es empresa, forzar filtro por su ID
+	// Si es empresa, forzar filtro por su ID
 	if ( current_user_can( 'empresa' ) ) {
-		$empresa_id = get_current_user_id();
-		$args['meta_query'][] = array(
+		$meta_query[] = array(
 			'key'     => '_qv_empresa',
-			'value'   => $empresa_id,
+			'value'   => get_current_user_id(),
 			'compare' => '='
 		);
 	}
 
-	$viajes = get_posts( $args );
+	if ( ! empty( $meta_query ) ) {
+		$args['meta_query'] = $meta_query;
+	}
 
+	return get_posts( $args );
+}
 
-	header( 'Content-Type: text/csv; charset=utf-8' );
-	$nombre_sitio = sanitize_title( get_bloginfo('name') );
-	$fecha_actual = date_i18n( 'Y-m-d_H-i-s' );
-	$filename = "{$nombre_sitio}-viajes-{$fecha_actual}.csv";
-	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-
-
-	$output = fopen( 'php://output', 'w' );
-
-	fputcsv( $output, array( 'ID', 'Título', 'Estado', 'Empresa', 'Fecha Programada', 'Importe Total', 'Forma de Pago' ) );
+/**
+ * Devuelve las filas (cabecera + datos) listas para exportar.
+ *
+ * @param array $viajes Lista de objetos WP_Post.
+ * @return array
+ */
+function remiseria_viajes_export_rows( $viajes ) {
+	$rows   = array();
+	$rows[] = array( 'ID', 'Título', 'Estado', 'Empresa', 'Fecha Programada', 'Importe Total', 'Forma de Pago' );
 
 	foreach ( $viajes as $viaje ) {
 		$viaje_id       = $viaje->ID;
@@ -319,30 +330,30 @@ function remiseria_download_viajes_csv() {
 		$hora           = get_post_meta( $viaje_id, '_qv_hora', true );
 		$forma_pago     = get_post_meta( $viaje_id, '_qv_pago', true );
 
-        // Buscar importe en cualquiera de los dos posibles campos
+		// Buscar importe en cualquiera de los dos posibles campos
 		$importe = get_post_meta( $viaje_id, '_qv_total_general', true );
 		if ( $importe === '' ) {
 			$importe = get_post_meta( $viaje_id, '_qv_importe_total', true );
 		}
 
-        // Formatear importe si existe
+		// Formatear importe si existe
 		if ( $importe !== '' && is_numeric( $importe ) ) {
 			$importe = '$' . number_format( ceil( floatval( $importe ) ), 0, ',', '.' );
 		} else {
 			$importe = '-';
 		}
 
-        // Formatear fecha y hora
+		// Formatear fecha y hora
 		$fecha_programada = $fecha;
 		if ( ! empty( $hora ) ) {
 			$fecha_programada .= ' ' . $hora;
 		}
 
-        // Obtener nombre de empresa
-		$empresa_user = $empresa_id ? get_user_by( 'id', $empresa_id ) : null;
+		// Obtener nombre de empresa
+		$empresa_user   = $empresa_id ? get_user_by( 'id', $empresa_id ) : null;
 		$empresa_nombre = $empresa_user ? $empresa_user->display_name : '-';
 
-		fputcsv( $output, array(
+		$rows[] = array(
 			$viaje_id,
 			$titulo,
 			$estado,
@@ -350,22 +361,83 @@ function remiseria_download_viajes_csv() {
 			$fecha_programada,
 			$importe,
 			$forma_pago
-		), ',', '"' );
+		);
 	}
 
+	return $rows;
+}
+
+// Función para generar el archivo CSV y forzar su descarga
+function remiseria_download_viajes_csv() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
+		return;
+	}
+
+	$viajes = remiseria_get_viajes_export();
+	$rows   = remiseria_viajes_export_rows( $viajes );
+
+	header( 'Content-Type: text/csv; charset=utf-8' );
+	$nombre_sitio = sanitize_title( get_bloginfo('name') );
+	$fecha_actual = date_i18n( 'Y-m-d_H-i-s' );
+	$filename = "{$nombre_sitio}-viajes-{$fecha_actual}.csv";
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+	// BOM UTF-8 para que Excel abra bien los acentos en el CSV
+	echo "\xEF\xBB\xBF";
+
+	$output = fopen( 'php://output', 'w' );
+	foreach ( $rows as $fila ) {
+		fputcsv( $output, $fila, ',', '"' );
+	}
 	fclose( $output );
 	exit;
 }
 
-// Botón para descargar CSV
-function remiseria_add_csv_download_button() {
+// Función para generar el archivo Excel (SpreadsheetML/XML) y forzar su descarga
+function remiseria_download_viajes_excel() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'empresa' ) ) {
+		return;
+	}
+
+	$viajes = remiseria_get_viajes_export();
+	$rows   = remiseria_viajes_export_rows( $viajes );
+
+	$nombre_sitio = sanitize_title( get_bloginfo('name') );
+	$fecha_actual = date_i18n( 'Y-m-d_H-i-s' );
+	$filename = "{$nombre_sitio}-viajes-{$fecha_actual}.xls";
+
+	header( 'Content-Type: application/vnd.ms-excel; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+	echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+	echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
+	echo '<Worksheet ss:Name="Viajes">' . "\n";
+	echo '<Table>' . "\n";
+
+	foreach ( $rows as $fila ) {
+		echo '<Row>' . "\n";
+		foreach ( $fila as $celda ) {
+			// Limpiar caracteres de control y escapar XML
+			$valor = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', (string) $celda );
+			$valor = htmlspecialchars( $valor, ENT_QUOTES, 'UTF-8' );
+			echo '<Cell><Data ss:Type="String">' . $valor . '</Data></Cell>' . "\n";
+		}
+		echo '</Row>' . "\n";
+	}
+
+	echo '</Table>' . "\n";
+	echo '</Worksheet>' . "\n";
+	echo '</Workbook>';
+	exit;
+}
+
+// Botones para descargar CSV y Excel
+function remiseria_add_export_buttons() {
 	global $typenow;
 
 	if ( $typenow === 'viaje' ) {
-        // Mantener los filtros actuales de la URL
-		$query_args = array(
-			'action' => 'remiseria_download_csv'
-		);
+		// Mantener los filtros actuales de la URL
+		$query_args = array();
 
 		if ( ! empty( $_GET['filtro_empresa'] ) ) {
 			$query_args['filtro_empresa'] = intval( $_GET['filtro_empresa'] );
@@ -379,15 +451,26 @@ function remiseria_add_csv_download_button() {
 			$query_args['filtro_pago'] = sanitize_text_field( $_GET['filtro_pago'] );
 		}
 
-		$download_url = add_query_arg( $query_args, admin_url( 'admin-ajax.php' ) );
+		// Filtro por mes (dropdown de fechas de WordPress)
+		if ( ! empty( $_GET['m'] ) ) {
+			$query_args['m'] = sanitize_text_field( $_GET['m'] );
+		}
+
+		$csv_args   = array_merge( $query_args, array( 'action' => 'remiseria_download_csv' ) );
+		$excel_args = array_merge( $query_args, array( 'action' => 'remiseria_download_excel' ) );
+
+		$csv_url   = add_query_arg( $csv_args, admin_url( 'admin-ajax.php' ) );
+		$excel_url = add_query_arg( $excel_args, admin_url( 'admin-ajax.php' ) );
 
 		echo '<div class="alignleft actions">';
-		echo '<a href="' . esc_url( $download_url ) . '" class="button button-primary">Descargar CSV</a>';
+		echo '<a href="' . esc_url( $csv_url ) . '" class="button button-primary">Descargar CSV</a> ';
+		echo '<a href="' . esc_url( $excel_url ) . '" class="button">Descargar Excel</a>';
 		echo '</div>';
 	}
 }
 
-add_action( 'restrict_manage_posts', 'remiseria_add_csv_download_button' );
+add_action( 'restrict_manage_posts', 'remiseria_add_export_buttons' );
 
-// Acción AJAX
+// Acciones AJAX
 add_action( 'wp_ajax_remiseria_download_csv', 'remiseria_download_viajes_csv' );
+add_action( 'wp_ajax_remiseria_download_excel', 'remiseria_download_viajes_excel' );
